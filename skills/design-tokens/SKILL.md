@@ -2,7 +2,7 @@
 name: design-tokens
 description: "Extract app colors/spacing into one theme file; author, lint, diff, and export DESIGN.md. Not for page redesign — that is pixis:site-redesign-ui-ux."
 version: 2.2.0
-author: Hermes Agent (adapted for Pixis)
+author: Pixis
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
