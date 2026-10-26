@@ -9,7 +9,7 @@ metadata:
   pixis:
     tags: [Frontend, SEO, Search, Structured Data, Web]
     category: frontend
-    related_skills: [web-quality-audit, accessibility-frontend, performance-frontend, core-web-vitals, best-practices-frontend]
+    related_skills: [accessibility-frontend, performance-frontend, core-web-vitals, best-practices-frontend]
 ---
 
 # SEO optimization
