@@ -1,6 +1,6 @@
 ---
 name: css-coder
-description: "CSS authoring guidance for web standards, accessibility, and performance. Use when writing, reviewing, or refactoring CSS — favors native CSS over frameworks, semantic structure, and maintainable code. See references/patterns.md for concrete patterns and snippets."
+description: "Write, review, refactor, or clean up CSS and stylesheets: messy or inconsistent styles, specificity and !important problems, custom properties/design tokens, layout (flex/grid), responsive design, focus styles, reduced motion, dark mode, and CSS performance. Use for ANY task that edits or audits .css files or component styling, including projects that also use Tailwind. Favors native CSS and web standards. See references/patterns.md."
 version: 1.0.0
 author: Pixis
 license: MIT

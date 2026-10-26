@@ -9,7 +9,7 @@ metadata:
   pixis:
     tags: [Frontend, HTML, Accessibility, Semantics, Web]
     category: frontend
-    related_skills: [accessibility-frontend, css-coder, frontend-testing]
+    related_skills: [accessibility-frontend, css-coder]
 ---
 
 # Semantic HTML
