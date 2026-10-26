@@ -102,6 +102,18 @@ export default defineConfig({
 });
 ```
 
+### Static hosts: `_headers` file (Cloudflare Pages / Netlify)
+
+Place in `public/_headers` (Vite copies it to the build root):
+
+```text
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'self'
+  X-Content-Type-Options: nosniff
+```
+
+Use `Content-Security-Policy-Report-Only` first to collect violations. A CSP that allows `'unsafe-inline'` or `'unsafe-eval'` in `script-src` gives little XSS protection even when enforced. Equivalents: `vercel.json` `headers`, `netlify.toml` `[[headers]]`.
+
 ### Meta tag (fallback)
 
 ```html

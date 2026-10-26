@@ -22,10 +22,10 @@ Every finding below is a pattern match against the code — not a confirmed expl
 
 ## Audit Process
 
-1. **Scan for dangerous patterns** — search the codebase for known vulnerability indicators (below).
+1. **Scan for dangerous patterns** — run *every* applicable search below (skip only those for stacks the project doesn't use) and list every hit before ranking. Don't pick a few files to read and stop; triage each hit as confirmed (untrusted data reaches the sink) or structural (pattern only), and say which hits you did not trace.
 2. **Review framework-specific risks** — check for framework security-bypass patterns (see `references/framework-patterns.md`).
-3. **Validate defensive measures** — verify CSP, CSRF tokens, input validation are actually present and correctly configured, not just assumed.
-4. **Check dependencies** — review npm/Node dependencies for known vulnerabilities.
+3. **Validate defensive measures** — verify CSP, CSRF tokens, input validation are actually present and correctly configured, not just assumed. For CSP and security headers, search *every* place they can be set before concluding anything (see "Locating CSP and Security Headers" below).
+4. **Check dependencies** — run the audit command for the project's package manager (`npm audit`, `yarn npm audit`, `pnpm audit`, `bun audit`, per its lockfile). Report totals for the full tree and, separately, for production-only (`--omit=dev` / `--prod`), and name every critical and high package with its advisory — don't summarize them as a count. Quote installed versions from the lockfile or `npm ls`, not from version ranges in `package.json`.
 5. **Report findings** — categorize by severity with concrete remediation guidance.
 
 ## Critical Vulnerability Patterns to Search
@@ -55,6 +55,19 @@ grep -rn "setInterval\s*(\s*['\"]" --include="*.js" --include="*.ts"
 # Twig unescaped output
 grep -rn "|raw" --include="*.twig" --include="*.html.twig"
 grep -rn "{% autoescape false %}" --include="*.twig"
+```
+
+### Library-specific sinks (search only if the dependency is present in package.json)
+
+```bash
+# react-markdown: identity urlTransform disables URL protocol filtering; rehype-raw renders raw HTML
+grep -rnE "urlTransform|transformLinkUri|rehype-raw|rehypeRaw" src
+# mermaid: securityLevel "loose" allows HTML labels and click handlers
+grep -rn "securityLevel" src
+# Any HTML sanitizer in use (absence next to raw-HTML sinks is itself a finding)
+grep -rnEi "dompurify|sanitize-html|isomorphic-dompurify" src package.json
+# Variable URLs assigned to links/navigation
+grep -rnE "href=\{[^}]*\}|window\.location|location\.assign" src
 ```
 
 ### CSRF indicators
@@ -89,6 +102,25 @@ Also grep for every exported Server Action / API route handler, not just the one
 grep -rn "'use server'" --include="*.ts" --include="*.tsx"
 grep -rln "export async function (GET|POST|PUT|DELETE|PATCH)" --include="route.ts" --include="route.tsx"
 ```
+
+## Locating CSP and Security Headers
+
+A CSP or security header is often set outside `index.html`, at the CDN/host or server. Before reporting one as missing, search all of these:
+
+```bash
+grep -rniE "content-security-policy|x-frame-options|strict-transport-security" . \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist
+ls public/_headers _headers public/_redirects vercel.json netlify.toml wrangler.toml \
+  firebase.json staticwebapp.config.json nginx.conf .htaccess 2>/dev/null
+```
+
+- Static hosts: `public/_headers` or `_headers` (Cloudflare Pages, Netlify), `vercel.json`, `netlify.toml`, `firebase.json`, `staticwebapp.config.json`.
+- Servers: nginx/Apache configs, `.htaccess`, Express/Helmet or other middleware, Vite/Next config `headers()`.
+- Markup: `<meta http-equiv="Content-Security-Policy">` in `index.html`.
+
+Reporting rules:
+- **Found** → evaluate it, don't just note it exists: is it `Report-Only` (not enforced)? Does `script-src` allow `'unsafe-inline'`, `'unsafe-eval'`, or wildcards/`https:`? Is `frame-ancestors`/`object-src` set?
+- **Not found in the repo** → say "not found in the repo; it may be set at the CDN/edge or hosting dashboard" and recommend verifying the deployed response headers (`curl -I <url>`). Never state "no CSP exists" from a repo search alone — absence in code is not absence in production.
 
 ## Reference Documentation
 
@@ -134,6 +166,11 @@ Load these based on what the scan turns up:
 ### High Findings
 [...]
 ```
+
+Also include a sink table so coverage gaps are visible. Every `.innerHTML =`, `.outerHTML =`, `insertAdjacentHTML`, `dangerouslySetInnerHTML`, `v-html`, `[innerHTML]` or `|raw` hit whose assigned value is not a constant string must get a row, even if it looks low risk. Hits that only clear content (`innerHTML = ""`) may be skipped. Before finishing, compare the row count to the grep hit count and list any hits you left out and why:
+
+| Sink / pattern | File:line | Data source | Status (confirmed / structural / not traced) |
+|---|---|---|---|
 
 ## OWASP Reference Links
 
