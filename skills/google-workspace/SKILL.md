@@ -14,7 +14,7 @@ metadata:
   pixis:
     tags: [Google, Gmail, Calendar, Drive, Sheets, Docs, Contacts, Email, OAuth]
     category: Productivity
-    related_skills: [notion, pdf, powerpoint]
+    related_skills: [notion, pdf, powerpoint, email-inbox-triage, meeting-action-items]
     attribution: Adapted from Nous Research hermes-agent google-workspace (MIT)
 ---
 
