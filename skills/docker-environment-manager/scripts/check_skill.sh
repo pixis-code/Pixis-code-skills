@@ -1,0 +1,43 @@
+#!/bin/bash
+# Local hygiene + routing fixtures for docker-environment-manager
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PASS=0; FAIL=0
+record() {
+  local name="$1" ok="$2" detail="$3"
+  if [ "$ok" = "1" ]; then echo "PASS: $name — $detail"; PASS=$((PASS+1))
+  else echo "FAIL: $name — $detail"; FAIL=$((FAIL+1)); fi
+}
+SKILL="$ROOT/SKILL.md"
+DESC=$(grep -E "^description:" "$SKILL" | head -1)
+[ -f "$SKILL" ] && record "SKILL.md exists" 1 "ok" || record "SKILL.md exists" 0 "missing"
+if head -1 "$SKILL" | grep -q '^---' && grep -q '^name: docker-environment-manager$' "$SKILL"; then
+  record "frontmatter name is docker-environment-manager" 1 "ok"
+else record "frontmatter name" 0 "bad"; fi
+grep -q "author: Pixis" "$SKILL" && record "author Pixis" 1 "ok" || record "author Pixis" 0 "missing"
+desc_ok=1
+echo "$DESC" | grep -qiE 'Docker|Compose|container' || desc_ok=0
+echo "$DESC" | grep -qiE "use when|not for|Use for" || desc_ok=0
+record "description WHAT/WHEN/NOT" "$desc_ok" "router"
+body_ok=1
+grep -qiE 'When to use' "$SKILL" || body_ok=0
+grep -qiE 'Do not use' "$SKILL" || body_ok=0
+grep -qiE 'Safety rules' "$SKILL" || body_ok=0
+grep -qiE 'compose' "$SKILL" || body_ok=0
+grep -qiE 'Completion criteria' "$SKILL" || body_ok=0
+grep -qiE 'explicit user confirmation' "$SKILL" || body_ok=0
+record "body gates" "$body_ok" "sections"
+if grep -qE "delegate_task|HERMES_HOME|\`search_files\`|\`read_file\`|\`terminal\`|browser_navigate|execute_code\(" "$SKILL"; then
+  record "no Hermes runtime tools" 0 "found"; else record "no Hermes runtime tools" 1 "ok"; fi
+echo "$DESC" | grep -qiE 'Docker|Compose|container' && record "positive cue" 1 "ok" || record "positive cue" 0 "missing"
+neg_ok=1
+echo "$DESC" | grep -qiE 'debugging-assistant' || neg_ok=0
+echo "$DESC" | grep -qiE 'api-backend' || neg_ok=0
+echo "$DESC" | grep -qiE 'test-first' || neg_ok=0
+record "negative cue (debug/api/test-first)" "$neg_ok" "ok"
+if [ -f "$ROOT/scripts/ensure_deps.sh" ] && grep -q -- '--check-only' "$ROOT/scripts/ensure_deps.sh"; then
+  record "ensure_deps.sh --check-only" 1 "ok"
+else
+  record "ensure_deps.sh --check-only" 0 "missing"
+fi
+echo ""; echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]
