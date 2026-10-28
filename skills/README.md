@@ -17,6 +17,11 @@ Short decision table for skill selection. The agent routes primarily from each s
 | `obsidian` | Local Obsidian vault notes | Read/search/edit vault markdown | Notion → `notion`; Google Docs → `google-workspace` |
 | `pdf` | Local PDF create/read/edit | PDF reports, forms, merge, OCR | PPTX → `powerpoint`; Google Docs → `google-workspace` |
 | `powerpoint` | Local .pptx decks | Create/edit PowerPoint | PDF → `pdf`; Google Slides → `google-workspace` |
+| `meeting-action-items` | Decisions/owners/tickets from notes | Meeting notes or transcript follow-through | Calendar/Gmail fetch → `google-workspace`; inbox triage → `email-inbox-triage` |
+| `email-inbox-triage` | Prioritize inbox + draft replies | What needs attention / triage / draft replies | Raw Gmail API → `google-workspace`; SMS → `telephony` |
+| `llm-wiki` | Interlinked markdown knowledge wiki | Create/ingest/query/lint a wiki KB | Plain Obsidian notes → `obsidian`; citations-only → `grounded-citations` |
+| `airtable` | Airtable bases/tables/records via API | Airtable CRUD / filters / upserts | Notion → `notion`; Sheets → `google-workspace` |
+| `telephony` | Twilio SMS/calls + AI outbound calls | Texts, phone numbers, outbound AI calls | Email → `email-inbox-triage` / `google-workspace` |
 
 ## Routing fixtures (positive → expected)
 
@@ -35,6 +40,11 @@ Short decision table for skill selection. The agent routes primarily from each s
 | Add a daily note in my Obsidian vault. | `obsidian` |
 | Merge these PDFs and extract the tables. | `pdf` |
 | Build a 5-slide pitch deck as pptx. | `powerpoint` |
+| Extract action items and owners from these meeting notes. | `meeting-action-items` |
+| Triage today's inbox and draft replies to anything urgent. | `email-inbox-triage` |
+| Ingest this article into my LLM wiki and update the index. | `llm-wiki` |
+| List records in my Airtable Tasks table with Status=Todo. | `airtable` |
+| Send an SMS from my Twilio number after I confirm. | `telephony` |
 
 ## Routing fixtures (negative — must not steal)
 
@@ -46,6 +56,10 @@ Short decision table for skill selection. The agent routes primarily from each s
 | Merge these PDFs into one file. | `powerpoint` / `notion` | `pdf` |
 | Create a Notion database for tasks. | `obsidian` / `google-workspace` | `notion` |
 | Build a PowerPoint pitch deck. | `pdf` | `powerpoint` |
+| Triage my Gmail inbox for urgent replies. | `meeting-action-items` / `telephony` | `email-inbox-triage` |
+| Extract owners and deadlines from this transcript. | `email-inbox-triage` | `meeting-action-items` |
+| Buy a Twilio number and text me a status update. | `email-inbox-triage` | `telephony` |
+| Create a wiki page for this research topic with cross-links. | `obsidian` (alone) | `llm-wiki` |
 
 Run per-skill checks:
 
@@ -58,5 +72,10 @@ bash skills/notion/scripts/check_skill.sh
 bash skills/obsidian/scripts/check_skill.sh
 bash skills/pdf/scripts/check_skill.sh
 bash skills/powerpoint/scripts/check_skill.sh
+bash skills/meeting-action-items/scripts/check_skill.sh
+bash skills/email-inbox-triage/scripts/check_skill.sh
+bash skills/llm-wiki/scripts/check_skill.sh
+bash skills/airtable/scripts/check_skill.sh
+bash skills/telephony/scripts/check_skill.sh
 ```
 
