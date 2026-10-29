@@ -1,6 +1,6 @@
 ---
 name: youtube-content
-description: "YouTube transcripts to summaries, threads, blogs."
+description: "Fetch a YouTube video's transcript and turn it into a summary, chapters with timestamps, key takeaways, notes, a thread, or a blog post. Use whenever the user shares a YouTube link (watch, youtu.be, shorts, embed, live) or an 11-character video ID and wants the transcript, a summary, chapters or timestamps, or the video content reformatted. Not for searching YouTube, downloading video or audio, or inventing transcript text when none can be retrieved."
 version: 1.0.0
 author: Pixis
 license: MIT
