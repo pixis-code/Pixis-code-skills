@@ -22,6 +22,8 @@ Short decision table for skill selection. The agent routes primarily from each s
 | `llm-wiki` | Interlinked markdown knowledge wiki | Create/ingest/query/lint a wiki KB | Plain Obsidian notes → `obsidian`; citations-only → `grounded-citations` |
 | `airtable` | Airtable bases/tables/records via API | Airtable CRUD / filters / upserts | Notion → `notion`; Sheets → `google-workspace` |
 | `telephony` | Twilio SMS/calls + AI outbound calls | Texts, phone numbers, outbound AI calls | Email → `email-inbox-triage` / `google-workspace` |
+| `data-visualization` | Charts/plots from tabular data | CSV/Excel/JSON → bar/line/scatter/hist/heatmap images | Notebook EDA → `jupyter-notebook`; Excel charts → `xlsx`; diagrams → `excalidraw` |
+| `model-deployment` | Prepare/validate/serve ML models | Inference API, Dockerize model, serving troubleshoot | Docker daemon-only → `docker-environment-manager`; charts → `data-visualization` |
 
 ## Routing fixtures (positive → expected)
 
@@ -45,6 +47,8 @@ Short decision table for skill selection. The agent routes primarily from each s
 | Ingest this article into my LLM wiki and update the index. | `llm-wiki` |
 | List records in my Airtable Tasks table with Status=Todo. | `airtable` |
 | Send an SMS from my Twilio number after I confirm. | `telephony` |
+| Plot a bar chart of revenue by region from this CSV. | `data-visualization` |
+| Package this sklearn model as a FastAPI service and validate locally. | `model-deployment` |
 
 ## Routing fixtures (negative — must not steal)
 
@@ -60,6 +64,10 @@ Short decision table for skill selection. The agent routes primarily from each s
 | Extract owners and deadlines from this transcript. | `email-inbox-triage` | `meeting-action-items` |
 | Buy a Twilio number and text me a status update. | `email-inbox-triage` | `telephony` |
 | Create a wiki page for this research topic with cross-links. | `obsidian` (alone) | `llm-wiki` |
+| Create a Jupyter notebook to explore this dataset. | `data-visualization` | `jupyter-notebook` |
+| Plot sales by month as a PNG chart. | `jupyter-notebook` / `excalidraw` | `data-visualization` |
+| My Docker Compose stack won't start (no ML). | `model-deployment` | `docker-environment-manager` |
+| Deploy this model behind FastAPI and test /predict locally. | `data-visualization` | `model-deployment` |
 
 Run per-skill checks:
 
@@ -77,5 +85,7 @@ bash skills/email-inbox-triage/scripts/check_skill.sh
 bash skills/llm-wiki/scripts/check_skill.sh
 bash skills/airtable/scripts/check_skill.sh
 bash skills/telephony/scripts/check_skill.sh
+bash skills/data-visualization/scripts/check_skill.sh
+bash skills/model-deployment/scripts/check_skill.sh
 ```
 

@@ -1,6 +1,6 @@
 ---
 name: jupyter-notebook
-description: "Create or run Jupyter notebooks for data exploration and analysis. Use when the user asks for a .ipynb, sales/dataset analysis, pandas load/inspect, missing-value handling, exploratory data analysis (EDA), Matplotlib/Seaborn visualizations, Markdown sections plus code cells, or a live Jupyter kernel with persistent state. Prefer an existing project dataset; otherwise state the sample data you will use. Run cells when the environment supports it and report errors. Not for one-shot non-notebook scripts (run), unit-test TDD (test-first), pdb stepping (python-advanced-debugger), or explaining code without a notebook (code-explainer)."
+description: "Create or run Jupyter notebooks for data exploration and analysis. Use when the user asks for a .ipynb, sales/dataset analysis, pandas load/inspect, missing-value handling, exploratory data analysis (EDA), Matplotlib/Seaborn visualizations, Markdown sections plus code cells, or a live Jupyter kernel with persistent state. Prefer an existing project dataset; otherwise state the sample data you will use. Run cells when the environment supports it and report errors. Not for one-shot non-notebook scripts (run), unit-test TDD (test-first), pdb stepping (python-advanced-debugger), explaining code without a notebook (code-explainer), or a single chart image from CSV without a notebook (data-visualization)."
 version: 1.1.0
 author: Pixis
 license: MIT
@@ -9,7 +9,7 @@ metadata:
   pixis:
     category: Data Science
     tags: [jupyter, notebook, pandas, eda, matplotlib, visualization, repl, data-science]
-    related_skills: [run, python-advanced-debugger, test-first, code-explainer]
+    related_skills: [run, python-advanced-debugger, test-first, code-explainer, data-visualization]
 ---
 
 # Jupyter notebook
@@ -37,6 +37,7 @@ Adapted from Hermes `jupyter-notebook` / hamelnb (MIT) for Pixis code beta. Pref
 | Step with pdb/debugpy breakpoints | `python-advanced-debugger` |
 | Explain existing analysis code without creating/running a notebook | `code-explainer` |
 | Pure app feature review vs requirements | `sdlc-review` |
+| Single chart/PNG from CSV (no notebook) | `data-visualization` |
 
 ## Steps
 

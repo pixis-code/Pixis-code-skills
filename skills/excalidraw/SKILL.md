@@ -1,6 +1,6 @@
 ---
 name: excalidraw
-description: "Draw hand-drawn style diagrams (architecture, flowcharts, sequence, concept maps) by writing Excalidraw JSON to a .excalidraw file that opens in excalidraw.com. Use when the user wants a diagram, flowchart, architecture sketch, or sequence diagram as an editable Excalidraw file. Not for Mermaid or SVG output, animated PR/diff diagrams (pr-lens), or charts of data (dataviz)."
+description: "Draw hand-drawn style diagrams (architecture, flowcharts, sequence, concept maps) by writing Excalidraw JSON to a .excalidraw file that opens in excalidraw.com. Use when the user wants a diagram, flowchart, architecture sketch, or sequence diagram as an editable Excalidraw file. Not for Mermaid or SVG output, animated PR/diff diagrams (pr-lens), or charts of data (`data-visualization`)."
 version: 1.0.0
 author: Pixis
 license: MIT
@@ -9,7 +9,7 @@ metadata:
   pixis:
     category: Creative
     tags: [excalidraw, diagrams, flowcharts, architecture, visualization, json]
-    related_skills: [pr-lens, codebase-documentation-generator]
+    related_skills: [pr-lens, codebase-documentation-generator, data-visualization]
 ---
 
 # Excalidraw

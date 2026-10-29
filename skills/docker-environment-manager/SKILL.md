@@ -1,6 +1,6 @@
 ---
 name: docker-environment-manager
-description: "Troubleshoot Docker Engine, containers, images, networks, volumes, Dockerfiles, and Compose stacks. Use for container crashes/restarts, Docker logs, build failures, connectivity, healthchecks, and environment issues. Not for Python unit-test writing or refactoring without a Docker issue (test-first, code-refactoring), application bugs unrelated to containers (debugging-assistant), or API-only failures when the container layer is healthy (api-backend-troubleshooter)."
+description: "Troubleshoot Docker Engine, containers, images, networks, volumes, Dockerfiles, and Compose stacks. Use for container crashes/restarts, Docker logs, build failures, connectivity, healthchecks, and environment issues. Not for Python unit-test writing or refactoring without a Docker issue (test-first, code-refactoring), application bugs unrelated to containers (debugging-assistant), API-only failures when the container layer is healthy (api-backend-troubleshooter), or ML model packaging/inference endpoints (model-deployment)."
 version: 1.1.0
 author: Pixis
 license: MIT
@@ -9,7 +9,7 @@ metadata:
   pixis:
     category: Backend
     tags: [docker, compose, containers, devops, logs, volumes]
-    related_skills: [debugging-assistant, api-backend-troubleshooter, test-first, code-refactoring]
+    related_skills: [debugging-assistant, api-backend-troubleshooter, test-first, code-refactoring, model-deployment]
 ---
 
 # Docker environment manager
