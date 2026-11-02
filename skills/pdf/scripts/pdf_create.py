@@ -10,7 +10,7 @@ Spec format (UTF-8 JSON):
   "author": "Analytics",
   "subtitle": "Confidential — internal use",
   "theme": "professional",   // professional | plain | midnight | forest
-  "accent": "#1F4E79",       // optional hex override
+  "accent": "#1F4E79",       // optional; or "palette": ["red", "gold"] / "colors": {"accent": "navy"}
   "page_size": "A4",         // or letter
   "page_numbers": true,
   "margin_pt": 54,
@@ -62,7 +62,11 @@ THEMES: dict[str, dict[str, Any]] = {
         "callout_info_bg": "#EEF2FF",
         "callout_warn_bg": "#FEF3C7",
         "callout_success_bg": "#D1FAE5",
-        "rule": "#312E81",
+        "rule": "#818CF8",
+        "gold": "#818CF8",
+        "eyebrow": "#C7D2FE",
+        "header": "#1E1B4B",
+        "cover": "#312E81",
     },
     "forest": {
         "accent": "#14532D",
@@ -75,7 +79,11 @@ THEMES: dict[str, dict[str, Any]] = {
         "callout_info_bg": "#ECFDF5",
         "callout_warn_bg": "#FEF9C3",
         "callout_success_bg": "#DCFCE7",
-        "rule": "#166534",
+        "rule": "#C4A35A",
+        "gold": "#C4A35A",
+        "eyebrow": "#BBF7D0",
+        "header": "#166534",
+        "cover": "#14532D",
     },
     "business": {
         "accent": "#0E1F38",
@@ -94,6 +102,74 @@ THEMES: dict[str, dict[str, Any]] = {
         "header": "#16274D",
         "cover": "#0E1F38",
     },
+    "blush": {
+        "accent": "#C45C74",
+        "accent_soft": "#F8EEF0",
+        "text": "#3F2A32",
+        "muted": "#8A6A72",
+        "table_header_bg": "#6B3044",
+        "table_header_fg": "#FFFFFF",
+        "table_alt_bg": "#FBF3F5",
+        "callout_info_bg": "#F8EEF0",
+        "callout_warn_bg": "#FFF4E5",
+        "callout_success_bg": "#F3F7F2",
+        "rule": "#C48A7A",
+        "gold": "#C48A7A",
+        "eyebrow": "#A84B63",
+        "header": "#F3DDE3",
+        "cover": "#F8EEF0",
+    },
+    "sage": {
+        "accent": "#3E7A62",
+        "accent_soft": "#E7EFE6",
+        "text": "#24332C",
+        "muted": "#5E7268",
+        "table_header_bg": "#1F3D32",
+        "table_header_fg": "#FFFFFF",
+        "table_alt_bg": "#F3F7F2",
+        "callout_info_bg": "#E7EFE6",
+        "callout_warn_bg": "#FEF9C3",
+        "callout_success_bg": "#DCFCE7",
+        "rule": "#C4A574",
+        "gold": "#C4A574",
+        "eyebrow": "#2F6F56",
+        "header": "#D5E3D4",
+        "cover": "#E7EFE6",
+    },
+    "sand": {
+        "accent": "#A15C38",
+        "accent_soft": "#F6F0E6",
+        "text": "#2C261F",
+        "muted": "#7A6E60",
+        "table_header_bg": "#3E3428",
+        "table_header_fg": "#FFFFFF",
+        "table_alt_bg": "#F8F3EA",
+        "callout_info_bg": "#F6F0E6",
+        "callout_warn_bg": "#FFF4E5",
+        "callout_success_bg": "#F3F7F2",
+        "rule": "#C4843E",
+        "gold": "#C4843E",
+        "eyebrow": "#A15C38",
+        "header": "#EBE1D2",
+        "cover": "#F6F0E6",
+    },
+    "charcoal": {
+        "accent": "#E07A5F",
+        "accent_soft": "#F3F2EF",
+        "text": "#2A2A28",
+        "muted": "#6B675F",
+        "table_header_bg": "#2A2A28",
+        "table_header_fg": "#F7F4EE",
+        "table_alt_bg": "#F3F2EF",
+        "callout_info_bg": "#F6F6F5",
+        "callout_warn_bg": "#FFF4E5",
+        "callout_success_bg": "#E7F6ED",
+        "rule": "#E07A5F",
+        "gold": "#E07A5F",
+        "eyebrow": "#E07A5F",
+        "header": "#3A3A37",
+        "cover": "#2A2A28",
+    },
     "plain": {
         "accent": "#000000",
         "accent_soft": "#EEEEEE",
@@ -110,12 +186,103 @@ THEMES: dict[str, dict[str, Any]] = {
 }
 
 
+REPORT_THEMES = {"business", "midnight", "forest", "blush", "sage", "sand", "charcoal"}
+
+
+def _is_report_theme(theme: dict[str, Any]) -> bool:
+    return theme.get("_name") in REPORT_THEMES
+
+
 def _reconfigure_stdio() -> None:
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8")
         except Exception:
             pass
+
+
+NAMED_COLORS = {
+    "navy": "0E1F38",
+    "gold": "E89B3C",
+    "teal": "159E93",
+    "blue": "1D4ED8",
+    "red": "B91C1C",
+    "green": "166534",
+    "orange": "C2410C",
+    "purple": "6D28D9",
+    "black": "111827",
+    "white": "FFFFFF",
+    "gray": "4B5563",
+    "grey": "4B5563",
+    "pink": "BE185D",
+    "yellow": "CA8A04",
+    "indigo": "312E81",
+}
+
+
+def _color_token(value: Any) -> str | None:
+    """Return RRGGBB for a hex string or color name, or None."""
+    if not isinstance(value, str):
+        return None
+    raw = value.strip().lower()
+    if raw in NAMED_COLORS:
+        return NAMED_COLORS[raw]
+    hexv = raw.lstrip("#")
+    if len(hexv) == 3 and all(ch in "0123456789abcdef" for ch in hexv):
+        hexv = "".join(ch * 2 for ch in hexv)
+    if len(hexv) == 6 and all(ch in "0123456789abcdef" for ch in hexv):
+        return hexv.upper()
+    print(f"Warning: ignoring color {value!r}", file=sys.stderr)
+    return None
+
+
+def _pick_color(spec: dict[str, Any], colors: dict[str, Any], keys: tuple[str, ...], top_level: tuple[str, ...] = ()) -> str | None:
+    for key in keys:
+        token = _color_token(colors.get(key))
+        if token:
+            return token
+    for key in top_level:
+        token = _color_token(spec.get(key))
+        if token:
+            return token
+    return None
+
+
+def _apply_pdf_colors(base: dict[str, Any], spec: dict[str, Any]) -> None:
+    """Replace theme hex values when the spec names colors."""
+    colors = spec.get("colors") if isinstance(spec.get("colors"), dict) else {}
+    palette: list[str] = []
+    raw_palette = spec.get("palette") if isinstance(spec.get("palette"), list) else colors.get("palette")
+    if isinstance(raw_palette, list):
+        for item in raw_palette:
+            token = _color_token(item)
+            if token:
+                palette.append(token)
+    accent = _pick_color(spec, colors, ("accent", "primary"), ("accent", "primary")) or (palette[0] if palette else None)
+    gold = _pick_color(spec, colors, ("gold", "secondary"), ("gold", "secondary")) or (palette[1] if len(palette) > 1 else None)
+    eyebrow = _pick_color(spec, colors, ("eyebrow",)) or (palette[2] if len(palette) > 2 else None)
+    cover = _pick_color(spec, colors, ("cover", "title_bg")) or (palette[0] if palette else None)
+    header = _pick_color(spec, colors, ("header", "header_bg"))
+    if not any((accent, gold, eyebrow, cover, header, palette)):
+        return
+    if accent:
+        base["accent"] = accent
+        base["table_header_bg"] = header or accent
+        base["cover"] = cover or accent
+        base["header"] = header or accent
+        if gold is None:
+            base["rule"] = accent
+            base["gold"] = accent
+    if gold:
+        base["rule"] = gold
+        base["gold"] = gold
+    if eyebrow:
+        base["eyebrow"] = eyebrow
+    if cover and not accent:
+        base["cover"] = cover
+    if header and not accent:
+        base["header"] = header
+        base["table_header_bg"] = header
 
 
 def _hex_to_color(value: str, colors_mod):
@@ -136,11 +303,7 @@ def _resolve_theme(spec: dict[str, Any], colors_mod) -> dict[str, Any]:
         print(f"Warning: unknown theme {name!r}, using professional", file=sys.stderr)
         name = "professional"
     base = dict(THEMES[name])
-    if spec.get("accent"):
-        accent = str(spec["accent"])
-        base["accent"] = accent
-        base["table_header_bg"] = accent
-        base["rule"] = accent
+    _apply_pdf_colors(base, spec)
     resolved: dict[str, Any] = {}
     for key, val in base.items():
         if isinstance(val, str):
@@ -289,14 +452,20 @@ def build_pdf(spec: dict, out_path: str) -> int:
 
     theme = _resolve_theme(spec, colors)
     styles = _build_styles(theme, getSampleStyleSheet, ParagraphStyle)
-    if theme.get("_name") == "business":
-        styles["title"].textColor = colors.white
+    if _is_report_theme(theme):
         styles["title"].fontSize = 32
         styles["title"].leading = 38
         styles["title"].alignment = TA_LEFT
-        styles["subtitle"].textColor = colors.Color(0.725, 0.796, 0.918)
         styles["subtitle"].alignment = TA_LEFT
-    page_choice = str(spec.get("page_size", "widescreen" if theme.get("_name") == "business" else "A4")).lower()
+        cover = theme.get("cover")
+        light_cover = bool(cover) and (0.299 * cover.red + 0.587 * cover.green + 0.114 * cover.blue) > 0.62
+        if light_cover:
+            styles["title"].textColor = colors.Color(0.10, 0.12, 0.16)
+            styles["subtitle"].textColor = colors.Color(0.20, 0.25, 0.32)
+        else:
+            styles["title"].textColor = colors.white
+            styles["subtitle"].textColor = colors.Color(0.725, 0.796, 0.918)
+    page_choice = str(spec.get("page_size", "widescreen" if _is_report_theme(theme) else "A4")).lower()
     if page_choice == "letter":
         page_size = letter
     elif page_choice == "widescreen":
@@ -304,20 +473,20 @@ def build_pdf(spec: dict, out_path: str) -> int:
     else:
         page_size = A4
     margin = float(spec.get("margin_pt", 54))
-    top_margin = 96 if theme.get("_name") == "business" else margin
+    top_margin = 96 if _is_report_theme(theme) else margin
 
     story: list[Any] = []
 
     # Document title block when title is set and first element isn't already that heading
     if spec.get("title"):
-        if theme.get("_name") == "business":
+        if _is_report_theme(theme):
             story.append(Spacer(1, 70))
             brand = str(spec.get("brand") or spec.get("eyebrow") or "").strip()
             if brand:
                 eyebrow = ParagraphStyle(
                     "PixisEyebrow",
                     parent=styles["subtitle"],
-                    textColor=colors.Color(0.082, 0.620, 0.576),
+                    textColor=theme.get("eyebrow") or colors.Color(0.082, 0.620, 0.576),
                     fontName="Helvetica-Bold",
                     fontSize=11,
                     leading=14,
@@ -331,15 +500,15 @@ def build_pdf(spec: dict, out_path: str) -> int:
             story.append(Spacer(1, 10))
         story.append(
             HRFlowable(
-                width="28%" if theme.get("_name") == "business" else "100%",
-                thickness=3 if theme.get("_name") == "business" else 2,
+                width="28%" if _is_report_theme(theme) else "100%",
+                thickness=3 if _is_report_theme(theme) else 2,
                 color=theme.get("rule") or theme["accent"],
-                hAlign="LEFT" if theme.get("_name") == "business" else "CENTER",
+                hAlign="LEFT" if _is_report_theme(theme) else "CENTER",
                 spaceBefore=2,
                 spaceAfter=14,
             )
         )
-        if theme.get("_name") == "business":
+        if _is_report_theme(theme):
             story.append(PageBreak())
 
     for el in spec.get("elements", []):
@@ -471,7 +640,7 @@ def build_pdf(spec: dict, out_path: str) -> int:
 
     def draw_chrome(canvas, doc):
         canvas.saveState()
-        if theme.get("_name") == "business" and doc.page == 1 and spec.get("title"):
+        if _is_report_theme(theme) and doc.page == 1 and spec.get("title"):
             canvas.setFillColor(theme["cover"])
             canvas.rect(0, 0, page_size[0], page_size[1], fill=1, stroke=0)
             canvas.setFillColor(theme["rule"])
@@ -483,7 +652,7 @@ def build_pdf(spec: dict, out_path: str) -> int:
             if footer:
                 canvas.drawString(36, 22, footer)
             canvas.drawRightString(page_size[0] - 36, 22, "01")
-        elif theme.get("_name") == "business":
+        elif _is_report_theme(theme):
             canvas.setFillColor(theme["header"])
             canvas.rect(0, page_size[1] - 78, page_size[0], 78, fill=1, stroke=0)
             canvas.setFillColor(theme["rule"])
@@ -492,14 +661,16 @@ def build_pdf(spec: dict, out_path: str) -> int:
             report = str(spec.get("report") or "")
             running = " · ".join(part for part in (brand, report) if part)
             if running:
-                canvas.setFillColor(colors.Color(0.725, 0.796, 0.918))
+                header = theme.get("header")
+                light_header = bool(header) and (0.299 * header.red + 0.587 * header.green + 0.114 * header.blue) > 0.62
+                canvas.setFillColor(colors.Color(0.10, 0.16, 0.28) if light_header else colors.Color(0.725, 0.796, 0.918))
                 canvas.setFont("Helvetica", 8)
                 canvas.drawString(36, page_size[1] - 22, running.upper())
         elif theme.get("_name") != "plain":
             canvas.setStrokeColor(theme["accent"])
             canvas.setLineWidth(2)
             canvas.line(margin, page_size[1] - 24, page_size[0] - margin, page_size[1] - 24)
-        if spec.get("page_numbers", True) and not (theme.get("_name") == "business" and doc.page == 1 and spec.get("title")):
+        if spec.get("page_numbers", True) and not (_is_report_theme(theme) and doc.page == 1 and spec.get("title")):
             canvas.setFillColor(theme["muted"])
             canvas.setFont("Helvetica", 9)
             title = str(spec.get("title") or "").strip()
@@ -514,7 +685,7 @@ def build_pdf(spec: dict, out_path: str) -> int:
         author=spec.get("author", ""),
         leftMargin=margin,
         rightMargin=margin,
-        topMargin=top_margin if theme.get("_name") == "business" else margin + 12,
+        topMargin=top_margin if _is_report_theme(theme) else margin + 12,
         bottomMargin=margin,
     )
     doc.build(story, onFirstPage=draw_chrome, onLaterPages=draw_chrome)

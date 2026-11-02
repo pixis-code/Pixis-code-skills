@@ -1,7 +1,7 @@
 ---
 name: pdf
-description: "Create styled PDFs and read/merge/fill/OCR local PDF files. Use when building a professional PDF report/invoice, or merging/extracting/filling PDFs. Board reports use theme business (widescreen, navy cover, gold rules). Not for PowerPoint (powerpoint), Google Docs (google-workspace), or Notion (notion)."
-version: 1.2.0
+description: "Create styled PDFs and read/merge/fill/OCR local PDF files. Use when building a report or invoice, or merging/extracting/filling PDFs. Choose the theme that fits the topic (business, blush, sage, sand, charcoal, midnight, forest) and use the user's colors when they name them. Not for PowerPoint (powerpoint), Google Docs (google-workspace), or Notion (notion)."
+version: 1.4.0
 author: Pixis
 license: MIT
 platforms: [linux, macos, windows]
@@ -18,12 +18,26 @@ metadata:
 Create **professionally styled** PDFs from JSON specs, plus read/merge/split/
 watermark/fill/OCR helpers via `pypdf`, `reportlab`, and `pdfplumber`.
 
-**Create quality bar (mandatory):** board and performance reports use theme
-`business` with `page_size: "widescreen"`, plus `brand`, `report`, and `footer`.
-That theme paints a navy cover (`#0E1F38`), gold bars (`#E89B3C`), a teal
-eyebrow, and a navy header band on later pages. `professional`, `midnight`, and
-`forest` remain for shorter documents. Do **not** emit bare black-and-white
-platypus defaults unless the user asks for `theme: "plain"`.
+**Create quality bar (mandatory):** choose the theme that fits the topic and
+audience, set `"theme"`, and say which one you chose. Do not default every
+report to `business`.
+
+| Topic | Theme |
+|-------|--------|
+| Finance, enterprise, board | `business` |
+| Beauty, wellness, lifestyle | `blush` or `sage` |
+| Tech, startups | `midnight` |
+| Sustainability, health | `forest` |
+| Hospitality, food, travel | `sand` |
+| Fashion, architecture, editorial | `charcoal` |
+
+Those themes use a widescreen cover, bars, an eyebrow, and a header band, in
+that theme's colors. Also set `brand`, `report`, and `footer`. When the user
+names colors, set `palette` or `colors` and those values replace the cover,
+rules, eyebrow, and table header. Hex (`#B91C1C`) and names (`red`, `navy`,
+`gold`, `teal`, `blue`, `green`, `black`) both work. Omitting `theme` stays on
+`professional` (A4, no cover) for a short note. Do **not** emit bare
+black-and-white platypus defaults unless the user asks for `theme: "plain"`.
 
 **When to use:** reports/invoices as PDF · fillable forms · extract text/tables ·
 merge/split/stamp/secure · page PNGs for review/OCR.
@@ -58,20 +72,22 @@ Forms/OCR/edit playbooks: `references/forms.md`, `references/ocr-extraction.md`,
 
 ### 1. Write a rich JSON spec (default)
 
-For a performance report, set `theme` to **business** (widescreen is the default
-for that theme). Also set `title`, `brand`, `footer`, and a mix of structured
-elements — not only bare paragraphs. Omitting `theme` stays on `professional`
-(A4) for short notes.
+Set `theme` from the topic table above (widescreen is the default for those
+themes). Also set `title`, `brand`, `footer`, and a mix of structured elements.
+The example below is a finance report, so its theme is `business`. A beauty
+report would use `blush` or `sage` instead. Omitting `theme` stays on
+`professional` (A4) for short notes.
 
 ```json
 {
   "title": "Q1 2026 Business Performance",
   "subtitle": "Reporting period · Q1 2026",
-  "brand": "Growlio Demo",
-  "report": "Q1 2026 Business Performance",
-  "footer": "Growlio Demo • Quarterly Business Performance Report",
+  "brand": "Northwind",
+  "report": "Q1 Business Performance",
+  "footer": "Northwind • Quarterly Business Performance Report",
   "author": "Analytics",
   "theme": "business",
+  "palette": ["navy", "gold", "teal"],
   "page_size": "widescreen",
   "page_numbers": true,
   "elements": [
@@ -118,10 +134,14 @@ python scripts/pdf_create.py spec.json -o report.pdf
 
 | Theme | Look |
 |-------|------|
-| `business` | Widescreen board report: navy cover, gold bars, header band on later pages |
-| `professional` (**default if theme omitted**) | Corporate blue accent, white header text on tables |
-| `midnight` | Indigo accent |
-| `forest` | Green accent |
+| `business` | Finance / board. Navy cover, gold bars |
+| `blush` | Beauty / lifestyle. Light blush cover, rose type |
+| `sage` | Wellness. Light sage cover, brass rule |
+| `sand` | Hospitality / food / travel. Warm paper, terracotta |
+| `charcoal` | Fashion / architecture. Charcoal cover, terracotta rule |
+| `midnight` | Tech / startups. Indigo cover, violet rule |
+| `forest` | Sustainability / health. Deep green, brass rule |
+| `professional` | Short notes when theme is omitted. Blue accent, A4 |
 | `plain` | Greyscale — **only if user asks for minimal/B&W** |
 
 Optional: `"accent": "#C45C26"` overrides the theme accent.
@@ -145,15 +165,16 @@ Optional: `"accent": "#C45C26"` overrides the theme accent.
 
 ## Pitfalls
 
-- Omitting `theme` stays on professional A4. Performance reports must set
-  `"theme": "business"`. `plain` without being asked yields the weak B&W look.
+- Omitting `theme` stays on professional A4. A real report sets the topic theme.
+  `plain` without being asked yields the weak B&W look.
 - Scanned PDFs need OCR — empty extract ≠ empty document.
 - Helper CLIs use **1-based** pages.
 - PDF/A is out of scope.
 
 ## Completion criteria (create)
 
-- [ ] Performance reports set `theme` to `business` and `page_size` to `widescreen`
+- [ ] Theme matches the topic, and the reply says which theme was chosen
+- [ ] User-named colors are in `palette` or `colors`
 - [ ] Title + at least one heading, and tables/lists/callouts where content fits
 - [ ] Output PDF exists; `--meta` page_count makes sense
 - [ ] Source files not overwritten unless requested

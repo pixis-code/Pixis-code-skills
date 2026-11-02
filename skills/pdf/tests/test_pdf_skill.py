@@ -397,6 +397,40 @@ def test_meta_set_and_clear(report_pdf: Path, workdir: Path):
     assert "Title" not in meta or meta.get("Title") in ("", None)
 
 
+def _pdf_text(path: Path) -> str:
+    import base64
+    import re
+    import zlib
+    data = path.read_bytes()
+    parts: list[str] = []
+    for match in re.finditer(rb"stream\n(.*?)endstream", data, re.S):
+        chunk = match.group(1).strip()
+        try:
+            chunk = zlib.decompress(base64.a85decode(chunk, adobe=True))
+        except Exception:
+            continue
+        parts.append(chunk.decode("latin1", "replace"))
+    return "\n".join(parts)
+
+
+def test_palette_recolors_business_cover(workdir: Path):
+    spec = {
+        "title": "Color Check",
+        "theme": "business",
+        "brand": "Northwind",
+        "palette": ["#112233", "#ABCDEF"],
+        "elements": [{"type": "paragraph", "text": "Body copy"}],
+    }
+    spec_path = workdir / "colors.json"
+    spec_path.write_text(json.dumps(spec), encoding="utf-8")
+    out = workdir / "colors.pdf"
+    run("pdf_create.py", str(spec_path), "-o", str(out))
+    text = _pdf_text(out)
+    assert ".066667 .133333 .2" in text  # cover #112233
+    assert ".670588 .803922 .937255" in text  # bars #ABCDEF
+    assert ".082353 .619608 .576471" in text  # eyebrow stays teal until named
+
+
 def test_attachments_roundtrip(report_pdf: Path, workdir: Path):
     payload = workdir / "payload.txt"
     payload.write_text("attachment payload UNIQUEATTACH99\n", encoding="utf-8")

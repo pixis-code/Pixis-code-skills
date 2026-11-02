@@ -473,3 +473,51 @@ def test_set_and_append_notes(deck, workdir):
 def test_render_help_flag():
     proc = run_raw("pptx_render.py", "--help")
     assert proc.returncode == 0 and "usage" in proc.stdout.lower()
+
+
+def test_metric_bullets_become_cards_with_distinct_fonts(workdir):
+    import zipfile
+    spec = {
+        "theme": "business",
+        "slides": [
+            {"layout": "title", "title": "Review"},
+            {"layout": "title_content", "title": "Quarter",
+             "bullets": ["$43.5K revenue", "Retention: 88%", "Hold spend where return is weakest"]},
+        ],
+    }
+    spec_path = workdir / "cards.json"
+    write_json(spec_path, spec)
+    out = workdir / "cards.pptx"
+    run("pptx_create.py", str(spec_path), str(out))
+    with zipfile.ZipFile(out) as zf:
+        title = zf.read("ppt/slides/slide1.xml").decode("utf-8")
+        content = zf.read("ppt/slides/slide2.xml").decode("utf-8")
+    assert "Georgia" in title
+    assert "Calibri" in title
+    assert "$43.5K" in content
+    assert "88%" in content
+    assert "Hold spend where return is weakest" in content
+
+
+def test_palette_replaces_fallback_colors(workdir):
+    import zipfile
+    spec = {
+        "palette": ["red", "#111827"],
+        "slides": [
+            {"layout": "title", "title": "Palette"},
+            {"layout": "title_content", "title": "Numbers",
+             "kpis": [{"value": "1", "label": "A", "color": "gold"}]},
+        ],
+    }
+    spec_path = workdir / "palette.json"
+    write_json(spec_path, spec)
+    out = workdir / "palette.pptx"
+    run("pptx_create.py", str(spec_path), str(out))
+    with zipfile.ZipFile(out) as zf:
+        slide1 = zf.read("ppt/slides/slide1.xml").decode("utf-8")
+        slide2 = zf.read("ppt/slides/slide2.xml").decode("utf-8")
+    assert "B91C1C" in slide1
+    assert "111827" in slide1
+    assert "0E1F38" not in slide1
+    assert "E89B3C" not in slide1
+    assert "E89B3C" in slide2

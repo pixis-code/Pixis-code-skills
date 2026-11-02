@@ -1,7 +1,7 @@
 # PDF create styling guide
 
-Use with `scripts/pdf_create.py`. Performance reports use theme **business**
-(widescreen, navy cover, gold rules). Omitting `theme` stays on **professional**.
+Use with `scripts/pdf_create.py`. Choose the theme for the topic and say which
+one you chose. Omitting `theme` stays on **professional** (A4, no cover).
 
 ## Why specs looked B&W before
 
@@ -16,8 +16,8 @@ stock stylesheet. Always set a color theme and use lists/callouts/tables.
   "subtitle": "Week of 2026-03-01",
   "theme": "business",
   "page_size": "widescreen",
-  "brand": "Growlio Demo",
-  "footer": "Growlio Demo • Quarterly Business Performance Report",
+  "brand": "Northwind",
+  "footer": "Northwind • Quarterly Business Performance Report",
   "elements": [
     {"type": "heading", "text": "Status", "level": 1},
     {"type": "callout", "text": "All SLAs met. One Sev-3 open.", "style": "success"},
@@ -34,11 +34,16 @@ stock stylesheet. Always set a color theme and use lists/callouts/tables.
 
 ## Theme cheat sheet
 
-- `business` — navy `#0E1F38`, gold `#E89B3C`, teal eyebrow — board / performance reports
+- `business` — finance, enterprise, board. Navy `#0E1F38`, gold `#E89B3C`, teal eyebrow
+- `blush` / `sage` — beauty, wellness, lifestyle
+- `midnight` — tech, startups
+- `forest` — sustainability, health
+- `sand` — hospitality, food, travel
+- `charcoal` — fashion, architecture
 - `professional` — blue (#1F4E79) — shorter documents when theme is omitted
-- `midnight` — indigo — product/eng reviews
-- `forest` — green — sustainability / finance positive
 - `plain` — greyscale — only when explicitly requested
+
+When the user names colors, `palette` or `colors` replaces that theme's cover, rules, and eyebrow.
 
 Override accent: `"accent": "#B45309"`.
 
