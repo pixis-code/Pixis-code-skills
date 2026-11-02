@@ -1,26 +1,31 @@
 ---
 name: data-visualization
-description: "Explore data and generate charts (bar, line, scatter, hist, heatmap). Use when the user wants a chart, graph, plot, or visual analysis of CSV/Excel/JSON data as image files. Not for Jupyter notebooks (jupyter-notebook), Excel-embedded charts (xlsx), architecture diagrams (excalidraw), or model serving (model-deployment)."
-version: 1.0.0
+description: "Explore data and produce focused charts plus optional dashboards with quantified insights. Use when the user wants charts, graphs, plots, a visual dashboard, or visual analysis of CSV/Excel/JSON. Not for Jupyter notebooks (jupyter-notebook), Excel-embedded charts (xlsx), architecture diagrams (excalidraw), or model serving (model-deployment)."
+version: 1.1.0
 author: Pixis
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
   pixis:
     category: Data Science
-    tags: [charts, graphs, matplotlib, pandas, visualization, data]
+    tags: [charts, graphs, matplotlib, pandas, visualization, dashboard, insights, data]
     related_skills: [jupyter-notebook, xlsx, powerpoint, pdf]
     attribution: New Pixis skill; chart practices informed by common data-viz conventions (no direct Hermes skill clone)
 ---
 
 # Data visualization
 
-Help explore, prepare, and visualize tabular data with clear charts (PNG/SVG)
-and short interpretation of trends, comparisons, and outliers. Prefer saving
-chart files over embedding only in notebooks unless the user asks for `.ipynb`.
+Produce **publication-ready chart images** and a **structured insight brief** from
+tabular data. For broad analysis asks, deliver **both**:
 
-**When to use:** bar/line/scatter/histogram/heatmap · “plot this CSV” · compare
-series · distribution · correlation heatmap · save chart images.
+1. **Focused charts** — one clear metric/question per file (easy to reuse/share)
+2. **A multi-panel dashboard** — single overview image when the ask is exploratory
+   (“analyze this”, “dashboard”, “what’s going on in this data”)
+
+Prefer saving image files over notebooks unless the user asks for `.ipynb`.
+
+**When to use:** bar/line/scatter/histogram/heatmap · plot a CSV · compare series ·
+visual dashboard · trend / dip / ranking analysis with chart evidence.
 
 **Do not use:** full EDA notebook workflow → `jupyter-notebook`; Excel workbook
 charts → `xlsx`; architecture/flow diagrams → `excalidraw`; deploy ML models →
@@ -37,80 +42,139 @@ charts → `xlsx`; architecture/flow diagrams → `excalidraw`; deploy ML models
 
 ```bash
 bash scripts/ensure_deps.sh --check-only
-# install only when needed and approved:
-bash scripts/ensure_deps.sh --yes
+bash scripts/ensure_deps.sh --yes   # only when needed and approved
 ```
 
-Helper CLI (optional shortcut):
+Helpers:
 
 ```bash
-python scripts/plot_data.py data.csv --type bar --x category --y value -o chart.png
-python scripts/plot_data.py data.csv --type line --x date --y revenue -o trend.png
-python scripts/plot_data.py data.csv --type scatter --x a --y b -o scatter.png
-python scripts/plot_data.py data.csv --type hist --x age -o hist.png
-python scripts/plot_data.py data.csv --type heatmap -o corr.png
+# Single focused chart
+python scripts/plot_data.py data.csv --type line --x month --y revenue -o charts/revenue.png \
+  --title "Monthly revenue"
+
+# Multi-panel dashboard (2–6 panels from a JSON layout)
+python scripts/plot_data.py data.csv --dashboard layout.json -o charts/dashboard.png \
+  --title "Business overview"
 ```
+
+## Default deliverable (follow this)
+
+Unless the user asks for **exactly one** chart:
+
+| Output | Required? |
+|--------|-----------|
+| 3–6 **focused** chart PNGs (one metric each) | Yes for multi-metric asks |
+| 1 **dashboard** PNG (subplots combining those views) | Yes for “analyze / overview / dashboard” asks; optional if user named one metric only |
+| **Insight brief** with quantified findings | Always |
+| Chart index (path → question answered) | Always |
+
+Save under a clear folder (e.g. `charts/` or `data-viz-output/`). **Never overwrite
+the source dataset** unless the user asks.
 
 ## Procedure
 
-### 1. Clarify objective and data
+### 1. Clarify objective and profile the data
 
-Identify the question (compare categories, trend over time, relationship,
-distribution, correlation). Locate the dataset (CSV/TSV/JSON/Excel/Parquet) or
-ask for a path. Prefer project data over inventing samples; if sampling, say so.
+State the analysis goal. Load the file; report shape, dtypes, date range,
+missingness, and key columns. Prefer project data; if sampling, say so.
 
-### 2. Inspect before plotting
+Derive candidate metrics from columns (totals, rates, averages, rankings). Do
+not invent columns that are not computable from the data.
 
-Load with pandas. Report shape, dtypes, missingness, and a few example rows.
-State if rows/columns are insufficient for the requested chart.
+### 2. Plan the visual story (before drawing)
 
-### 3. Prepare (copy, don’t mutate source)
+Pick **3–6 questions** the charts will answer, e.g.:
 
-Work on a **copy** in memory or a derived file. Clean only as needed for the
-chart (parse dates, drop empty rows for plotted columns, coerce numerics).
-**Do not overwrite the source dataset** unless the user explicitly asks.
+- How does the primary KPI move over time?
+- Where is the largest dip/spike, and by how much?
+- How do categories rank on efficiency / volume / satisfaction?
+- Are two metrics related (scatter) or unevenly distributed (hist)?
 
-### 4. Choose chart type
+Map each question → one chart type + columns. Prefer:
 
-| Goal | Prefer |
+| Goal | Chart |
 |------|--------|
+| Trend over time | line |
 | Compare categories | bar |
-| Trend over time/order | line |
-| Relationship of two numerics | scatter |
-| Distribution of one numeric | hist |
+| Relationship | scatter |
+| Distribution | hist |
 | Correlation matrix | heatmap |
-| Part-to-whole (few categories) | bar (prefer) or pie sparingly |
 
-Avoid dual axes and truncated baselines that exaggerate differences. Prefer
-direct labels over cryptic legends when few series.
+Avoid dual axes and truncated bar baselines. Prefer few categories on pie; usually
+use bar instead.
 
-### 5. Render with best practices
+### 3. Prepare on a copy
 
-Every chart needs: title, axis labels (with units when known), readable ticks,
-legend when multi-series, non-deceptive scale. Save to a path the user can open
-(e.g. `charts/…png`). Prefer PNG for sharing; SVG when the user wants crisp
-vector output.
+Clean in memory (parse dates, coerce numerics, drop empty plot rows). Compute
+derived fields (e.g. AOV = revenue/orders, efficiency = revenue/spend) only when
+inputs exist. Keep formulas in the insight brief.
 
-Use `scripts/plot_data.py` or a short project script. Prefer project-pinned
-Python (`.venv` / `uv` / `poetry`) when present.
+### 4. Render focused charts + dashboard
 
-### 6. Interpret (when asked)
+For each planned question, write one PNG with title, axis labels (units when
+known), legend if needed, readable ticks.
 
-Summarize notable trends, comparisons, outliers, and data gaps. Do not invent
-causation. Call out missing data or tiny sample sizes that weaken claims.
+Then, for overview asks, build a **dashboard** (2×2 or 2×3 subplot grid) that
+reuses the same views so the user gets one shareable overview **and** separate
+files for deep dives. Use `plot_data.py --dashboard` or a short matplotlib script.
+
+### 5. Insight brief (mandatory quality bar)
+
+After charts, write findings that a stakeholder can act on. Every major claim
+must be **quantified** and tied to a chart:
+
+- Magnitude: % change, absolute delta, rank, min/max period
+- Anomalies: dips/spikes with the period name (e.g. “April dip”)
+- Comparisons: best/worst category with the metric value
+- Caveats: missing months, small N, definition of derived metrics
+
+**Do not** stop at “revenue increased.” Prefer:
+“Revenue grew **45.8%** from Jan→Jun; the only monthly decline was **April**
+(see `charts/revenue_trend.png`).”
+
+Structure the reply as:
+
+1. **Chart index** — path + one-line purpose  
+2. **Key findings** — 4–8 bullets with numbers  
+3. **Per-chart notes** (optional, short) — what that panel shows  
+4. **Limitations** — data gaps / what was not computed  
+
+### 6. Verify before claiming success
+
+Confirm each output path exists and is non-empty. Re-open or re-read image
+metadata/size if needed. If a chart failed, say which panel and why — do not
+claim a complete dashboard.
+
+## Layout JSON (dashboard)
+
+`layout.json` example for `--dashboard`:
+
+```json
+{
+  "panels": [
+    {"type": "line", "x": "month", "y": "revenue", "title": "Revenue trend"},
+    {"type": "line", "x": "month", "y": "aov", "title": "Average order value"},
+    {"type": "bar", "x": "category", "y": "efficiency", "title": "Marketing efficiency"},
+    {"type": "bar", "x": "category", "y": "satisfaction", "title": "Customer satisfaction"}
+  ]
+}
+```
+
+Precompute derived columns into a working CSV if needed, then pass that path.
 
 ## Pitfalls
 
-- Chart without inspecting missing values or wrong dtypes
-- Overwriting source CSV/Excel
-- Misleading truncated y-axis for bar comparisons
-- Pie charts with many slices
-- Claiming seaborn/openpyxl available without checking
+- Only separate charts **or** only a dashboard — for overview asks, ship **both**
+- Insights without numbers or without linking to a chart file
+- Overwriting source data
+- Misleading scales; overcrowded pie charts
+- Claiming seaborn/openpyxl without checking deps
 
 ## Completion criteria
 
-- Dataset path (or stated sample) and chart objective clear
-- Chart type justified; labels/title present
-- Output file path reported and exists when save requested
-- Source data unmodified unless user asked
-- Interpretation grounded in the plotted data (or explicitly skipped)
+- [ ] Data profiled (shape, key columns, gaps stated)
+- [ ] Focused charts saved for each planned metric/question
+- [ ] Dashboard saved when the ask was broad/overview (or user declined it)
+- [ ] Insight brief includes quantified findings tied to chart paths
+- [ ] Source dataset unmodified unless explicitly requested
+- [ ] Output paths verified to exist

@@ -1,36 +1,35 @@
 ---
 name: pdf
-description: "Create, read, merge, fill, OCR, and edit local PDF files. Use when the user asks to merge PDFs, extract PDF tables/text, fill PDF forms, or build a PDF report. Not for PowerPoint decks (powerpoint), Google Docs (google-workspace), or Notion (notion)."
-version: 1.0.0
+description: "Create styled PDFs and read/merge/fill/OCR local PDF files. Use when building a professional PDF report/invoice, or merging/extracting/filling PDFs. Board reports use theme business (widescreen, navy cover, gold rules). Not for PowerPoint (powerpoint), Google Docs (google-workspace), or Notion (notion)."
+version: 1.2.0
 author: Pixis
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
   pixis:
-    tags: [pdf, documents, forms, ocr, text-extraction, reportlab, pypdf, pdfplumber]
+    tags: [pdf, documents, forms, ocr, text-extraction, reportlab, pypdf, pdfplumber, styling]
     category: Productivity
-    related_skills: [powerpoint, grounded-citations, arxiv]
-    attribution: Adapted from Nous Research hermes-agent pdf skill (MIT) — see LICENSE
+    related_skills: [powerpoint, grounded-citations, arxiv, data-visualization]
+    attribution: Adapted from Nous Research hermes-agent pdf skill (MIT) — see LICENSE; Pixis adds professional themes
 ---
 
 # PDF
 
-Create PDFs from JSON specs, build/fill AcroForm forms, extract text/tables/
-metadata, merge/split/rotate/watermark/stamp, export page images, manage
-metadata/attachments, and encrypt/decrypt — via `pypdf`, `reportlab`, and
-`pdfplumber`. Extra playbooks:
+Create **professionally styled** PDFs from JSON specs, plus read/merge/split/
+watermark/fill/OCR helpers via `pypdf`, `reportlab`, and `pdfplumber`.
 
-- Scanned/OCR: `references/ocr-extraction.md` (+ `scripts/extract_pymupdf.py`,
-  `scripts/extract_marker.py`)
-- NL text edits inside an existing PDF: `references/nano-pdf-editing.md`
-- Form field layout: `references/forms.md`
+**Create quality bar (mandatory):** board and performance reports use theme
+`business` with `page_size: "widescreen"`, plus `brand`, `report`, and `footer`.
+That theme paints a navy cover (`#0E1F38`), gold bars (`#E89B3C`), a teal
+eyebrow, and a navy header band on later pages. `professional`, `midnight`, and
+`forest` remain for shorter documents. Do **not** emit bare black-and-white
+platypus defaults unless the user asks for `theme: "plain"`.
 
 **When to use:** reports/invoices as PDF · fillable forms · extract text/tables ·
-merge/split/stamp/secure PDFs · page PNGs for review/OCR.
+merge/split/stamp/secure · page PNGs for review/OCR.
 
-**Do not use:** Google Drive Docs → `google-workspace`; slide decks →
-`powerpoint`; Notion → `notion`; HTML-to-PDF pixel perfection (use a headless
-browser instead).
+**Do not use:** Google Docs → `google-workspace`; slide decks → `powerpoint`;
+Notion → `notion`; pixel-perfect HTML-to-PDF (use a headless browser).
 
 ## Prerequisites
 
@@ -40,60 +39,121 @@ python -m pip install pypdf reportlab pdfplumber
 python -m pip install pypdfium2   # or install poppler (pdftoppm)
 ```
 
-Helpers print an install hint if an import is missing.
-
 ## How to run
-
-Scripts are argparse CLIs under `scripts/` — UTF-8 JSON in/out, `--help` on each.
 
 ```bash
 python scripts/pdf_create.py spec.json -o out.pdf
-python scripts/pdf_make_form.py formspec.json -o form.pdf
-python scripts/pdf_form_layout.py formspec.json
 python scripts/pdf_read.py doc.pdf --text
-python scripts/pdf_read.py doc.pdf --tables --csv-dir t/
 python scripts/pdf_read.py doc.pdf --meta
-python scripts/pdf_read.py form.pdf --fields
 python scripts/pdf_merge.py a.pdf b.pdf -o merged.pdf
 python scripts/pdf_split.py doc.pdf --pages 1-3,7 -o part.pdf
 python scripts/pdf_fill_form.py form.pdf --fields-json values.json -o filled.pdf
-python scripts/pdf_secure.py doc.pdf --encrypt -o enc.pdf --user-password SECRET
-python scripts/pdf_watermark.py doc.pdf --stamp mark.pdf -o stamped.pdf
-python scripts/pdf_stamp.py doc.pdf -o out.pdf --text "DRAFT" --x 150 --y 400
-python scripts/pdf_page_image.py doc.pdf --pages 1-3 --dpi 150 --out-dir imgs/
-python scripts/pdf_meta.py doc.pdf --set-meta --title "T" --author "A" -o out.pdf
+python scripts/pdf_page_image.py doc.pdf --pages 1 --dpi 150 --out-dir imgs/
 ```
 
-## Procedure
+Forms/OCR/edit playbooks: `references/forms.md`, `references/ocr-extraction.md`,
+`references/nano-pdf-editing.md`. Styling examples: `references/styling.md`.
 
-1. **Inspect** — `pdf_read.py file.pdf --meta`. If encrypted, decrypt first. If
-   `likely_scanned_pages`, render with `pdf_page_image.py` and follow
-   `references/ocr-extraction.md` (do not report empty text as "no content").
-2. **Create** — write a JSON spec (`heading`, `paragraph`, `table`, `image`,
-   `pagebreak`), run `pdf_create.py`, optionally render a page PNG to verify.
-3. **Extract** — `--text` / `--tables`; parse JSON (never eyeball binary PDF).
-4. **Manipulate** — merge/split/rotate/watermark/stamp as needed.
-5. **Forms** — lint with `pdf_form_layout.py`, build with `pdf_make_form.py`,
-   fill with `pdf_fill_form.py` after listing `--fields`.
-6. **Verify** before claiming success (see below).
+## Creating a professional PDF
+
+### 1. Write a rich JSON spec (default)
+
+For a performance report, set `theme` to **business** (widescreen is the default
+for that theme). Also set `title`, `brand`, `footer`, and a mix of structured
+elements — not only bare paragraphs. Omitting `theme` stays on `professional`
+(A4) for short notes.
+
+```json
+{
+  "title": "Q1 2026 Business Performance",
+  "subtitle": "Reporting period · Q1 2026",
+  "brand": "Growlio Demo",
+  "report": "Q1 2026 Business Performance",
+  "footer": "Growlio Demo • Quarterly Business Performance Report",
+  "author": "Analytics",
+  "theme": "business",
+  "page_size": "widescreen",
+  "page_numbers": true,
+  "elements": [
+    {"type": "heading", "text": "Executive summary", "level": 1},
+    {"type": "paragraph", "text": "Revenue grew <b>45.8%</b> versus last quarter."},
+    {"type": "callout", "text": "Key risk: April demand dip (−12%).", "style": "warn"},
+    {"type": "heading", "text": "Highlights", "level": 2},
+    {"type": "bullet_list", "items": [
+      "North region led volume (+18%)",
+      "Marketing efficiency highest in Services"
+    ]},
+    {"type": "heading", "text": "Results by region", "level": 2},
+    {"type": "table", "header": true, "rows": [
+      ["Region", "Units", "Revenue"],
+      ["North", "1,250", "$420k"],
+      ["South", "980", "$310k"]
+    ]},
+    {"type": "spacer", "height": 8},
+    {"type": "hrule"},
+    {"type": "paragraph", "text": "See appendix for methodology."}
+  ]
+}
+```
+
+```bash
+python scripts/pdf_create.py spec.json -o report.pdf
+```
+
+### 2. Element types
+
+| Type | Purpose |
+|------|---------|
+| `heading` | `level` 1–3 (accent-colored) |
+| `paragraph` | Body; supports `<b>`, `<i>`, `<br/>` |
+| `bullet_list` / `numbered_list` | `items: [...]` |
+| `table` | `rows` + `header: true` (accent header + zebra rows) |
+| `callout` | Highlight box; `style`: `info` \| `warn` \| `success` |
+| `image` | `path`, optional `width` |
+| `spacer` | `height` in points |
+| `hrule` | Accent divider |
+| `pagebreak` | New page |
+
+### 3. Themes
+
+| Theme | Look |
+|-------|------|
+| `business` | Widescreen board report: navy cover, gold bars, header band on later pages |
+| `professional` (**default if theme omitted**) | Corporate blue accent, white header text on tables |
+| `midnight` | Indigo accent |
+| `forest` | Green accent |
+| `plain` | Greyscale — **only if user asks for minimal/B&W** |
+
+Optional: `"accent": "#C45C26"` overrides the theme accent.
+
+### 4. Layout rules for agents
+
+1. Prefer **short sections** with H1/H2, not one wall of paragraphs.  
+2. Put KPIs in a **callout** or **table**, not buried in prose.  
+3. Use **bullet_list** for 3+ parallel points.  
+4. After create, run `pdf_read.py out.pdf --meta` (and optionally
+   `pdf_page_image.py` for a visual check).  
+5. Never claim “professional styling” while using `theme: "plain"` or only
+   unstyled paragraphs.
+
+## Other workflows
+
+1. **Inspect** — `pdf_read.py file.pdf --meta`. Decrypt / OCR scanned pages as needed.  
+2. **Extract** — `--text` / `--tables`; parse JSON.  
+3. **Manipulate** — merge/split/rotate/watermark/stamp.  
+4. **Forms** — lint → `pdf_make_form.py` → fill.  
 
 ## Pitfalls
 
+- Omitting `theme` stays on professional A4. Performance reports must set
+  `"theme": "business"`. `plain` without being asked yields the weak B&W look.
 - Scanned PDFs need OCR — empty extract ≠ empty document.
-- Flattened exotic widgets may misrender — verify visually.
-- `--compress` only deflates content streams (often 0–20% savings).
-- Permission flags are not real security; only user-password encryption is.
-- Helper CLIs use **1-based** pages; do not double-convert with 0-based APIs.
-- PDF/A is out of scope for these scripts (use Ghostscript + veraPDF externally).
+- Helper CLIs use **1-based** pages.
+- PDF/A is out of scope.
 
-## Verification
+## Completion criteria (create)
 
-- After create/merge/split: `pdf_read.py out.pdf --meta` (page_count / rotation).
-- After fill: `pdf_read.py filled.pdf --fields` and compare values.
-- Visual checks: `pdf_page_image.py` then open the PNGs.
-
-## Completion criteria
-
-- Right tool path chosen (create vs extract vs form vs OCR).
-- Dependencies present or install hint shown.
-- Output files exist; meta/fields/text checks match the user request.
+- [ ] Performance reports set `theme` to `business` and `page_size` to `widescreen`
+- [ ] Title + at least one heading, and tables/lists/callouts where content fits
+- [ ] Output PDF exists; `--meta` page_count makes sense
+- [ ] Source files not overwritten unless requested

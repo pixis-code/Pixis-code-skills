@@ -30,7 +30,9 @@ if grep -qiE 'HERMES_HOME|delegate_task|skill_view|hermes setup|`search_files`|`
 else record "no Hermes runtime tools" 1 "ok"; fi
 echo "$DESC" | grep -qiE 'pptx|PowerPoint|python-pptx|slides|deck' && record "positive cue" 1 "ok" || record "positive cue" 0 "missing"
 echo "$DESC" | grep -qiE 'pdf|google-workspace|notion' && record "negative cue" 1 "ok" || record "negative cue" 0 "missing"
-for f in scripts/pptx_create.py scripts/pptx_read.py scripts/pptx_edit.py LICENSE; do
+for f in scripts/pptx_create.py scripts/pptx_read.py scripts/pptx_edit.py references/design.md LICENSE; do
   [ -f "$ROOT/$f" ] && record "asset $f" 1 "ok" || record "asset $f" 0 "missing"
 done
+grep -qi 'professional' "$SKILL" && record "theme guidance" 1 "ok" || record "theme guidance" 0 "missing"
+grep -q 'THEMES' "$ROOT/scripts/pptx_create.py" && record "create themes" 1 "ok" || record "create themes" 0 "missing"
 echo ""; echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]

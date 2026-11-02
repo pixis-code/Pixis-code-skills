@@ -30,7 +30,14 @@ if grep -qiE 'HERMES_HOME|delegate_task|skill_view|hermes setup|`search_files`|`
 else record "no Hermes runtime tools" 1 "ok"; fi
 echo "$DESC" | grep -qiE 'PDF|create|merge|OCR|forms' && record "positive cue" 1 "ok" || record "positive cue" 0 "missing"
 echo "$DESC" | grep -qiE 'google-workspace|powerpoint|notion' && record "negative cue" 1 "ok" || record "negative cue" 0 "missing"
-for f in scripts/pdf_create.py scripts/pdf_read.py scripts/pdf_merge.py references/forms.md LICENSE; do
+for f in scripts/pdf_create.py scripts/pdf_read.py scripts/pdf_merge.py references/forms.md references/styling.md LICENSE; do
   [ -f "$ROOT/$f" ] && record "asset $f" 1 "ok" || record "asset $f" 0 "missing"
 done
+grep -qi 'professional' "$SKILL" && record "professional theme guidance" 1 "ok" || record "professional theme guidance" 0 "missing"
+grep -qi 'callout\|bullet_list' "$SKILL" && record "rich elements documented" 1 "ok" || record "rich elements" 0 "missing"
+if grep -q 'professional' "$ROOT/scripts/pdf_create.py" && grep -q 'THEMES' "$ROOT/scripts/pdf_create.py"; then
+  record "pdf_create themes" 1 "ok"
+else
+  record "pdf_create themes" 0 "missing"
+fi
 echo ""; echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]

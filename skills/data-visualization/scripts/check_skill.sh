@@ -15,7 +15,7 @@ if head -1 "$SKILL" | grep -q '^---' && grep -q '^name: data-visualization$' "$S
 grep -q 'author: Pixis' "$SKILL" && record "author Pixis" 1 "ok" || record "author Pixis" 0 "missing"
 grep -q 'pixis:' "$SKILL" && record "metadata.pixis" 1 "ok" || record "metadata.pixis" 0 "missing"
 desc_ok=1
-echo "$DESC" | grep -qiE 'chart|graph|plot|visual' || desc_ok=0
+echo "$DESC" | grep -qiE 'chart|graph|plot|visual|dashboard' || desc_ok=0
 echo "$DESC" | grep -qiE 'use when|not for' || desc_ok=0
 record "description WHAT/WHEN/NOT" "$desc_ok" "router"
 body_ok=1
@@ -29,5 +29,13 @@ else record "no Hermes runtime tools" 1 "ok"; fi
 echo "$DESC" | grep -qiE 'jupyter-notebook|xlsx|excalidraw|model-deployment' && record "negative cue" 1 "ok" || record "negative cue" 0 "missing"
 [ -f "$ROOT/scripts/plot_data.py" ] && record "plot_data.py" 1 "ok" || record "plot_data.py" 0 "missing"
 [ -f "$ROOT/scripts/ensure_deps.sh" ] && record "ensure_deps.sh" 1 "ok" || record "ensure_deps.sh" 0 "missing"
-grep -qi 'Do not overwrite the source' "$SKILL" && record "no source mutate" 1 "ok" || record "no source mutate" 0 "missing"
+grep -qi 'Do not overwrite the source\|Never overwrite' "$SKILL" && record "no source mutate" 1 "ok" || record "no source mutate" 0 "missing"
+grep -qi 'dashboard' "$SKILL" && record "dashboard workflow" 1 "ok" || record "dashboard workflow" 0 "missing"
+grep -qiE 'quantified|Insight brief|% change' "$SKILL" && record "quantified insights" 1 "ok" || record "quantified insights" 0 "missing"
+grep -qi 'focused charts' "$SKILL" && record "focused + overview" 1 "ok" || record "focused + overview" 0 "missing"
+if grep -q -- '--dashboard' "$ROOT/scripts/plot_data.py"; then
+  record "plot_data dashboard flag" 1 "ok"
+else
+  record "plot_data dashboard flag" 0 "missing"
+fi
 echo ""; echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]
