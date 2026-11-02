@@ -1,6 +1,6 @@
 ---
 name: powerpoint
-description: "Create styled .pptx decks (themes, hierarchy, accent layouts) and read/edit them with python-pptx. Use for pitch decks and slide presentations. Choose the theme that fits the topic (business, blush, sage, sand, charcoal, midnight, forest) and use the user's colors when they name them. Not for PDF files (pdf), Google Slides (google-workspace), or Notion (notion)."
+description: "Create styled .pptx decks and read or edit them with python-pptx. Use for pitch decks and slide presentations. Fit the palette and layout to the content, and use colors the user names. Not for PDF files (pdf), Google Slides (google-workspace), or Notion (notion)."
 version: 1.5.0
 author: Pixis
 license: MIT
@@ -69,85 +69,82 @@ Author JSON specs as UTF-8; parse script JSON from stdout.
 
 ## Design quality bar (create)
 
-`pptx_create.py` draws a designed deck (cover, header band, rules, KPI cards).
-Choose the theme that fits the topic and audience, set `"theme"` to that name,
-and say which one you chose. Do not default every deck to `business`.
+Build a deck for this request. A sample file is an example of quality, not a
+look to copy and not a theme every deck must use.
 
-| Topic | Theme |
-|-------|--------|
-| Finance, enterprise, board | `business` |
-| Beauty, wellness, lifestyle | `blush` or `sage` |
-| Tech, startups | `midnight` |
-| Sustainability, health | `forest` |
-| Hospitality, food, travel | `sand` |
-| Fashion, architecture, editorial | `charcoal` |
+Decide the palette from the content and from any colors the user names. Named
+themes (`professional`, `business`, `midnight`, `forest`, `blush`, `sage`,
+`sand`, `charcoal`) are starting points. Set `"theme"` when one fits. When the
+user names colors, set `palette` or `colors` and those replace the starting
+point. `palette` order is cover, secondary, eyebrow. `plain` is only for an
+unstyled Office look. In the reply, say which colors you used and why.
 
-`professional` is a neutral blue. `plain` is only for an unstyled Office look.
+Match the layout to the content:
 
-**Colors from the prompt (mandatory):** when the user names colors, put them on
-the spec. Those values replace the theme cover, header, rules, and KPI rails.
-Accept hex (`#B91C1C` or `B91C1C`) or names (`red`, `blue`, `navy`, `gold`,
-`teal`, `green`, `orange`, `purple`, `black`, `yellow`, `pink`, `gray`,
-`indigo`).
+1. **Title slide** — short title, subtitle, and a brand line when there is one.
+2. **One idea per content slide.** Use a header, then the content.
+3. **Numbers** go in `kpis` (value + label). The script draws them as cards.
+4. **Parallel groups** (options, steps, compare) go in `cards`, each with a
+   title and a few lines. Set `"tone": "dark"` only on a card that should be
+   filled. A list of four or more lines becomes cards. Two or three short lines
+   stay `bullets`, and those bullets show a real dot.
+5. **Comparisons** use a `table` or a `chart`. Leave table size unset. The
+   script makes it wide, under the title, with a header row. A chart is placed
+   below cards so they do not overlap.
+6. **One font for the whole deck**, heading and body. Set
+   `"fonts": {"font": "Calibri"}` when the user names a face. Otherwise the
+   theme supplies one face. Do not mix two faces in one deck.
+7. Set `brand`, `report`, and `footer` from the user's words.
 
-```json
-"palette": ["red", "#111827", "gold"]
-```
-
-or one role at a time: `"accent": "red"`, `"gold": "gold"`, or
-
-```json
-"colors": {"accent": "#003366", "gold": "#C4A35A", "eyebrow": "teal"}
-```
-
-`palette` order is cover, secondary (rules), eyebrow, then extra KPI rails.
-A per-card `"color"` on a KPI overrides that card's rail. A per-bullet
-`"color"` is kept. Do not leave the default palette in place after the user
-asked for specific colors. Set `brand`, `report`, and `footer` from the user's
-words, not from a sample company.
-
-1. **Title slide** (`layout: "title"`) — eyebrow, short title, subtitle. The
-   theme paints the cover, rules, and type in that theme's colors.
-2. **Section slides** (`layout: "section"`) sparingly between chapters.
-3. **Content slides** — one idea each. Prefer 3–5 short bullets, a chart, or a
-   table. The theme draws the header band, gold rule, and type on a blank canvas
-   (not the default Office placeholder).
-4. Put headline numbers in `kpis` (value + label, up to four). The script draws
-   them as cards, above any prose. A bullet that is itself a figure (`$43.5K
-   revenue`, `Retention: 88%`) is lifted into a card, so do not leave numbers
-   as a flat bullet list. Rails use the theme colors, or a per-card `"color"`.
-5. Titles and body use different fonts. Each theme has its own pair (for
-   example Georgia + Calibri, Cambria + Calibri, Palatino + Calibri). Do not
-   set one font on every run. Override only when the user names fonts:
-   `"fonts": {"title": "Georgia", "body": "Calibri"}`.
-6. Use `charts` or `tables` for comparisons. Explicit `color` on a bullet is kept.
-7. Only `"theme": "plain"` when the user asks for unstyled/default Office look.
-
-Example:
+Illustration only. Do not reuse this copy or these colors unless the request
+is this request:
 
 ```json
 {
-  "theme": "business",
-  "palette": ["navy", "gold", "teal"],
-  "brand": "Northwind",
-  "report": "Q1 Business Performance",
-  "footer": "Northwind • Quarterly Business Performance Report",
+  "theme": "professional",
+  "fonts": {"font": "Calibri"},
+  "brand": "Example",
+  "footer": "Example",
   "slide_size": "16:9",
   "slides": [
-    {"layout": "title", "title": "Q2 Review", "subtitle": "Reporting period · Q1 2026"},
-    {"layout": "title_content", "title": "What changed",
-     "subtitle": "Services led the quarter.",
+    {"layout": "title", "title": "Quarterly review", "subtitle": "What changed"},
+    {"layout": "title_content", "title": "Results",
      "kpis": [
-       {"value": "$43.5K", "label": "Revenue"},
-       {"value": "835", "label": "Orders"},
-       {"value": "158", "label": "New customers"},
-       {"value": "88%", "label": "Retention"}
+       {"value": "12%", "label": "Growth"},
+       {"value": "3", "label": "Regions ahead"}
      ],
-     "bullets": ["Services led marketing efficiency", "Hold spend where return is weakest"]},
-    {"layout": "section", "title": "Appendix"}
+     "bullets": ["North led volume", "Hold spend where return is weakest"]},
+    {"layout": "title_content", "title": "Options",
+     "cards": [
+       {"title": "Keep", "items": ["Current plan"]},
+       {"title": "Change", "items": ["Shift budget"]}
+     ]}
   ]
 }
 ```
+
+## Spec syntax
+
+Set these on the deck. Slide fields override the deck for that slide. Sizes are points. Colors are `#RRGGBB`, `RRGGBB`, or a name (`red`, `navy`, `teal`).
+
+| Field | What it sets |
+|-------|----------------|
+| `theme` | Starting palette: `professional`, `business`, `midnight`, `forest`, `blush`, `sage`, `sand`, `charcoal`, or `plain` |
+| `palette` | `["cover", "secondary", "eyebrow"]` — replaces the theme colors |
+| `colors` | One role: `accent`, `gold`, `eyebrow`, `cover`, `header` |
+| `fonts` | `{"font": "Calibri"}` — one face for the whole deck |
+| `sizes` | `{"title": 36, "heading": 28, "subtitle": 16, "body": 16, "kpi": 26, "table": 15}` |
+| `brand`, `report`, `footer` | Running text, from the request |
+
+Slide content:
+
+| Field | Syntax |
+|-------|--------|
+| `bullets` | `"Line"` or `{"text": "Line", "level": 1, "size": 18, "bold": true, "color": "1F4E79", "font": "Calibri"}` |
+| `kpis` | `{"value": "12%", "label": "Growth", "color": "teal"}` |
+| `cards` | `{"title": "Option", "items": ["One line"], "tone": "dark"}` — omit `tone` for a light card |
+| `tables` | `{"header": true, "font_size": 15, "rows": [["A", "B"], ["1", "2"]]}` — leave `left`, `top`, `width`, and `height` unset |
+| `charts` | `{"type": "bar", "categories": ["Q1"], "series": {"North": [10]}}` — types: `bar`, `bar_h`, `line`, `pie` |
 
 See `references/design.md`.
 
@@ -179,9 +176,8 @@ See `references/design.md`.
 ## Completion criteria
 
 - Output `.pptx` exists and outline matches the request.
-- The reply names the theme and why it fits the topic.
-- When the user names colors, the spec `palette` or `colors` uses those colors.
-- Otherwise the deck uses the topic theme (`business`, `blush`, `sage`, `sand`, `charcoal`, `midnight`, `forest`), or `plain` when asked.
-- Title slide plus focused content slides (not one undifferentiated bullet dump).
+- Colors and layout follow this request. User-named colors are in `palette` or `colors`.
+- The reply says which colors were used.
+- Title slide plus content that fits the material: cards, numbers, a wide table, or a short bullet list. Not one copied sample and not a wall of lines.
 - Edits confirmed via `--outline` (and render when visuals matter).
 - Missing optional tools reported honestly (`rendered: false`), not as success.

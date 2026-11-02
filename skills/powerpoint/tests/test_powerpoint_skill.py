@@ -492,8 +492,9 @@ def test_metric_bullets_become_cards_with_distinct_fonts(workdir):
     with zipfile.ZipFile(out) as zf:
         title = zf.read("ppt/slides/slide1.xml").decode("utf-8")
         content = zf.read("ppt/slides/slide2.xml").decode("utf-8")
-    assert "Georgia" in title
     assert "Calibri" in title
+    assert "Georgia" not in title
+    assert "buChar" in content
     assert "$43.5K" in content
     assert "88%" in content
     assert "Hold spend where return is weakest" in content
