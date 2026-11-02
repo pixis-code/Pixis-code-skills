@@ -44,6 +44,7 @@ from pptx.chart.data import CategoryChartData
 from pptx.dml.color import RGBColor
 from pptx.enum.chart import XL_CHART_TYPE
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import PP_ALIGN
 from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 from lxml import etree
@@ -183,21 +184,21 @@ THEMES = {
     "plain": {},
 }
 
-# One typeface for the whole deck. Themes differ so decks do not all look the same.
+# Serif display + sans body. The pair changes by theme so decks are not identical.
 THEME_FONTS = {
-    "business": "Calibri",
-    "professional": "Cambria",
-    "midnight": "Trebuchet MS",
-    "forest": "Candara",
-    "blush": "Georgia",
-    "sage": "Constantia",
-    "sand": "Palatino Linotype",
-    "charcoal": "Arial",
+    "business": ("Georgia", "Calibri"),
+    "professional": ("Cambria", "Calibri"),
+    "midnight": ("Georgia", "Trebuchet MS"),
+    "forest": ("Constantia", "Candara"),
+    "blush": ("Palatino Linotype", "Calibri"),
+    "sage": ("Constantia", "Calibri"),
+    "sand": ("Georgia", "Candara"),
+    "charcoal": ("Georgia", "Arial"),
 }
-for _theme_name, _font_name in THEME_FONTS.items():
+for _theme_name, (_title_font, _body_font) in THEME_FONTS.items():
     if THEMES.get(_theme_name):
-        THEMES[_theme_name]["title_font"] = _font_name
-        THEMES[_theme_name]["body_font"] = _font_name
+        THEMES[_theme_name]["title_font"] = _title_font
+        THEMES[_theme_name]["body_font"] = _body_font
 
 NAMED_COLORS = {
     "navy": "0E1F38",
@@ -466,16 +467,21 @@ def _apply_color_request(theme, spec):
         return None
     theme = dict(theme)
     fonts = spec.get("fonts") if isinstance(spec.get("fonts"), dict) else {}
-    chosen = fonts.get("font") or fonts.get("title") or fonts.get("body")
-    if chosen:
-        theme["title_font"] = str(chosen)
-        theme["body_font"] = str(chosen)
+    if fonts.get("font"):
+        theme["title_font"] = str(fonts["font"])
+        theme["body_font"] = str(fonts["font"])
+    else:
+        if fonts.get("title"):
+            theme["title_font"] = str(fonts["title"])
+        if fonts.get("body"):
+            theme["body_font"] = str(fonts["body"])
     sizes = spec.get("sizes") if isinstance(spec.get("sizes"), dict) else {}
-    defaults = {"title": 36, "heading": 28, "subtitle": 16, "body": 16, "kpi": 26, "table": 15}
+    # Points on a 13.333×7.5in slide. Matches a 96/72/44/32/24 px scale at 144 dpi.
+    defaults = {"title": 48, "heading": 36, "subtitle": 22, "body": 16, "kpi": 36, "table": 16}
     for key, fallback in defaults.items():
         raw = sizes.get(key, theme.get(f"size_{key}", fallback))
         try:
-            theme[f"size_{key}"] = int(raw)
+            theme[f"size_{key}"] = max(12, int(raw))
         except (TypeError, ValueError):
             theme[f"size_{key}"] = fallback
     colors = spec.get("colors") if isinstance(spec.get("colors"), dict) else {}
@@ -525,16 +531,18 @@ def _apply_color_request(theme, spec):
 
 def _fonts(theme):
     if not theme:
-        return "Calibri", "Calibri"
-    font = theme.get("title_font") or theme.get("body_font") or "Calibri"
-    return font, font
+        return "Georgia", "Calibri"
+    title = theme.get("title_font") or "Georgia"
+    body = theme.get("body_font") or "Calibri"
+    return title, body
 
 
 def _size(theme, key, fallback):
     try:
-        return int((theme or {}).get(f"size_{key}", fallback))
+        value = int((theme or {}).get(f"size_{key}", fallback))
     except (TypeError, ValueError):
-        return fallback
+        value = fallback
+    return max(12, value)
 
 
 _METRIC_VALUE = r"[$€£]?\s*[+\-]?\d[\d,]*(?:\.\d+)?\s*%?\s*[KkMmBb]?"
@@ -643,50 +651,84 @@ def _draw_point_grid(slide, cards, theme, left, top, width, bottom=6.55):
         return top
     count = len(points)
     cols = 1 if count == 1 else (3 if count == 3 else 2)
-    rows = (count + cols - 1) // cols
+    rows_n = (count + cols - 1) // cols
     gap = 0.18
     card_w = (width - gap * (cols - 1)) / cols
-    card_h = min(2.15, max(1.15, (bottom - top - gap * (rows - 1)) / rows))
-    font, _ = _fonts(theme)
+    title_font, body_font = _fonts(theme)
     accent = theme.get("accent") or theme["heading"]
     rails = theme.get("kpi_stripes") or [accent]
-    for index, point in enumerate(points):
-        row, col = divmod(index, cols)
-        x = left + col * (card_w + gap)
-        y = top + row * (card_h + gap)
-        dark = point.get("tone") == "dark"
-        shape = slide.shapes.add_shape(
-            MSO_SHAPE.ROUNDED_RECTANGLE, Inches(x), Inches(y), Inches(card_w), Inches(card_h))
-        shape.fill.solid()
-        shape.fill.fore_color.rgb = RGBColor.from_string(theme["heading"] if dark else "FFFFFF")
-        shape.line.color.rgb = RGBColor.from_string(theme["heading"] if dark else "E6E0D8")
-        if not dark:
-            _rect(slide, Inches(x), Inches(y + 0.16), Inches(0.06), Inches(max(0.4, card_h - 0.32)), rails[index % len(rails)])
-        frame = shape.text_frame
-        frame.word_wrap = True
-        frame.margin_left = Inches(0.16)
-        frame.margin_right = Inches(0.12)
-        title = point.get("title") or ""
-        body = point.get("body") or ""
-        title_color = "FFFFFF" if dark else (point.get("color") or accent)
-        body_color = "F4F1EC" if dark else theme["body"]
-        paragraph = frame.paragraphs[0]
-        if title:
-            run = paragraph.add_run()
-            run.text = title
-            run.font.size = Pt(_size(theme, "body", 16))
-            run.font.bold = True
-            run.font.name = font
-            run.font.color.rgb = RGBColor.from_string(str(title_color).lstrip("#"))
+
+    def _line_count(text):
+        if not text:
+            return 0
+        per_line = max(18, int(card_w * 10))
+        return sum(max(1, (len(line) + per_line - 1) // per_line) for line in str(text).split("\n"))
+
+    row_heights = []
+    for row in range(rows_n):
+        heights = []
+        for col in range(cols):
+            index = row * cols + col
+            if index >= count:
+                break
+            point = points[index]
+            lines = (1 if point.get("title") else 0) + _line_count(point.get("body"))
+            heights.append(min(3.2, max(1.15, 0.36 * lines + 0.5)))
+        row_heights.append(max(heights) if heights else 1.15)
+    y_cursor = top
+    for row in range(rows_n):
+        card_h = row_heights[row]
+        if y_cursor + card_h > bottom:
+            break
+        for col in range(cols):
+            index = row * cols + col
+            if index >= count:
+                break
+            point = points[index]
+            x = left + col * (card_w + gap)
+            dark = point.get("tone") == "dark"
+            shape = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE, Inches(x), Inches(y_cursor),
+                Inches(card_w), Inches(card_h))
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = RGBColor.from_string(theme["heading"] if dark else "FFFFFF")
+            shape.line.color.rgb = RGBColor.from_string(theme["heading"] if dark else "E6E0D8")
+            if not dark:
+                _rect(
+                    slide, Inches(x), Inches(y_cursor + 0.18), Inches(0.06),
+                    Inches(max(0.4, card_h - 0.36)), rails[index % len(rails)],
+                )
+            frame = shape.text_frame
+            frame.word_wrap = True
+            frame.margin_left = Inches(0.22)
+            frame.margin_right = Inches(0.18)
+            body_pr = frame._txBody.find(qn("a:bodyPr"))
+            if body_pr is not None:
+                body_pr.set("anchor", "ctr")
+            title = point.get("title") or ""
+            body = point.get("body") or ""
+            title_color = "FFFFFF" if dark else (point.get("color") or accent)
+            body_color = "F4F1EC" if dark else theme["body"]
+            paragraph = frame.paragraphs[0]
+            paragraph.alignment = PP_ALIGN.CENTER
+            if title:
+                run = paragraph.add_run()
+                run.text = title
+                run.font.size = Pt(_size(theme, "body", 16))
+                run.font.bold = True
+                run.font.name = title_font
+                run.font.color.rgb = RGBColor.from_string(str(title_color).lstrip("#"))
             if body:
-                paragraph = frame.add_paragraph()
-        if body:
-            run = paragraph.add_run()
-            run.text = body
-            run.font.size = Pt(max(12, _size(theme, "body", 16) - 2))
-            run.font.name = font
-            run.font.color.rgb = RGBColor.from_string(body_color)
-    return top + rows * card_h + gap * max(0, rows - 1) + 0.15
+                for line_index, line in enumerate(str(body).split("\n")):
+                    paragraph = frame.add_paragraph() if (title or line_index) else paragraph
+                    paragraph.alignment = PP_ALIGN.CENTER
+                    run = paragraph.add_run()
+                    run.text = line
+                    run.font.size = Pt(_size(theme, "body", 16))
+                    run.font.name = body_font
+                    run.font.color.rgb = RGBColor.from_string(body_color)
+        y_cursor += card_h + gap
+    return y_cursor + 0.08
 
 
 def _draw_designed(prs, slide, spec, theme, meta):
@@ -710,8 +752,8 @@ def _draw_designed(prs, slide, spec, theme, meta):
             _textbox(slide, 0.7, 4.05, width, 0.7, spec["subtitle"], _size(theme, "subtitle", 16), theme["subtitle_fg"], font=body_font)
         footer = meta.get("footer") or ""
         if footer:
-            _textbox(slide, 0.7, 6.85, 8, 0.3, footer, 11, theme["subtitle_fg"], font=body_font)
-        _textbox(slide, width - 0.4, 6.85, 1.6, 0.3, page_label, 11, theme["subtitle_fg"], font=body_font)
+            _textbox(slide, 0.7, 6.85, 8, 0.3, footer, 12, theme["subtitle_fg"], font=body_font)
+        _textbox(slide, width - 0.4, 6.85, 1.6, 0.3, page_label, 12, theme["subtitle_fg"], font=body_font)
         return None
     if layout == "section":
         _set_bg(slide, theme["title_bg"])
@@ -728,7 +770,7 @@ def _draw_designed(prs, slide, spec, theme, meta):
     _rect(slide, 0, Inches(1.2), prs.slide_width, Inches(0.055), gold)
     running = " · ".join(part for part in (eyebrow, meta.get("report")) if part)
     if running:
-        _textbox(slide, 0.45, 0.12, width - 1.5, 0.28, running.upper(), 10, theme["subtitle_fg"], bold=True, font=body_font)
+        _textbox(slide, 0.45, 0.12, width - 1.5, 0.28, running.upper(), 12, theme["subtitle_fg"], bold=True, font=body_font)
     if spec.get("title"):
         _textbox(slide, 0.45, 0.4, width - 1.6, 0.65, spec["title"], _size(theme, "heading", 28), theme["title_fg"], bold=True, font=title_font)
     _textbox(slide, width - 0.3, 0.42, 1.5, 0.4, page_label, 12, theme["subtitle_fg"], font=body_font)
@@ -753,8 +795,8 @@ def _draw_designed(prs, slide, spec, theme, meta):
         y = 6.7
     footer = meta.get("footer") or ""
     if footer:
-        _textbox(slide, 0.45, 6.95, 8, 0.28, footer, 10, theme["muted"], font=body_font)
-        _textbox(slide, width - 0.2, 6.95, 1.4, 0.28, f"{meta['index']:02d}", 10, theme["muted"], font=body_font)
+        _textbox(slide, 0.45, 6.95, 8, 0.28, footer, 12, theme["muted"], font=body_font)
+        _textbox(slide, width - 0.2, 6.95, 1.4, 0.28, f"{meta['index']:02d}", 12, theme["muted"], font=body_font)
     return y
 
 

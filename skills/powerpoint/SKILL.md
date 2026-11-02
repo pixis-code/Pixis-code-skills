@@ -69,59 +69,57 @@ Author JSON specs as UTF-8; parse script JSON from stdout.
 
 ## Design quality bar (create)
 
-Build a deck for this request. A sample file is an example of quality, not a
-look to copy and not a theme every deck must use.
+A sample deck shows finish. It is not a palette or a layout to copy.
 
-Decide the palette from the content and from any colors the user names. Named
-themes (`professional`, `business`, `midnight`, `forest`, `blush`, `sage`,
-`sand`, `charcoal`) are starting points. Set `"theme"` when one fits. When the
-user names colors, set `palette` or `colors` and those replace the starting
-point. `palette` order is cover, secondary, eyebrow. `plain` is only for an
-unstyled Office look. In the reply, say which colors you used and why.
+### Decide once, before any slide
 
-Match the layout to the content:
+Write down, then reuse on every slide:
 
-1. **Title slide** — short title, subtitle, and a brand line when there is one.
-2. **One idea per content slide.** Use a header, then the content.
-3. **Numbers** go in `kpis` (value + label). The script draws them as cards.
-4. **Parallel groups** (options, steps, compare) go in `cards`, each with a
-   title and a few lines. Set `"tone": "dark"` only on a card that should be
-   filled. A list of four or more lines becomes cards. Two or three short lines
-   stay `bullets`, and those bullets show a real dot.
-5. **Comparisons** use a `table` or a `chart`. Leave table size unset. The
-   script makes it wide, under the title, with a header row. A chart is placed
-   below cards so they do not overlap.
-6. **One font for the whole deck**, heading and body. Set
-   `"fonts": {"font": "Calibri"}` when the user names a face. Otherwise the
-   theme supplies one face. Do not mix two faces in one deck.
-7. Set `brand`, `report`, and `footer` from the user's words.
+- the outline
+- 1–3 fonts
+- the hex palette
 
-Illustration only. Do not reuse this copy or these colors unless the request
-is this request:
+Do not pick a new palette or a new type scale on the next slide. In the reply, state those choices.
 
-```json
-{
-  "theme": "professional",
-  "fonts": {"font": "Calibri"},
-  "brand": "Example",
-  "footer": "Example",
-  "slide_size": "16:9",
-  "slides": [
-    {"layout": "title", "title": "Quarterly review", "subtitle": "What changed"},
-    {"layout": "title_content", "title": "Results",
-     "kpis": [
-       {"value": "12%", "label": "Growth"},
-       {"value": "3", "label": "Regions ahead"}
-     ],
-     "bullets": ["North led volume", "Hold spend where return is weakest"]},
-    {"layout": "title_content", "title": "Options",
-     "cards": [
-       {"title": "Keep", "items": ["Current plan"]},
-       {"title": "Change", "items": ["Shift budget"]}
-     ]}
-  ]
-}
-```
+### Palette
+
+- One dark, one light, and 1–2 accents, all hex. A named theme is only a start (`professional`, `business`, `midnight`, `forest`, `blush`, `sage`, `sand`, `charcoal`). User-named colors go in `palette` or `colors` and replace that start.
+- No pure `#FFFFFF` or `#000000`. Tone them toward the palette.
+- Two light background tones may alternate. One dark slide is the statement slide, not the default for every slide.
+- Body text at least 4.5:1 contrast against its background. Text at 44px and up may use 3:1.
+- Colors that must be told apart differ in lightness, not only hue.
+- Color never carries the meaning alone. The label says it too.
+- `plain` only when the user wants unstyled Office slides.
+
+### Type
+
+- One scale, reused: **48 / 36 / 22 / 16 / 12** pt (a 96 / 72 / 44 / 32 / 24 px scale on the 13.333×7.5 in slide). Set it with `sizes`.
+- Nothing below 12pt.
+- Emphasize with weight or color, not a new size.
+- A serif for titles and a clean sans for body. Vary the pairing from deck to deck. Set `fonts.title` and `fonts.body`. Use `fonts.font` only when the user wants a single face.
+
+### Layout
+
+- 16:9 slide. Keep the heading on the same top line on every content slide.
+- Slides of the same kind use the same structure.
+- Footer is one row: label on the left, page number on the right. Nothing below it.
+- Fill about 70% of the column and leave room. If a slide is full, split it.
+- Card text is centered. Card height follows the text, not one fixed height.
+
+### Content
+
+- One idea per slide. Turn a list into cards, a table, big numbers, or one statement.
+- Cards differ by role. The key card may be `"tone": "dark"`. The others stay light.
+- Titles use the same grammar, such as noun phrases.
+- Do not invent statistics or quotes. Unknown facts are placeholders like `[Presenter name]`.
+- Numbers that are real go in `kpis`. Parallel groups go in `cards`. Two or three short lines stay bullets.
+
+### Process
+
+1. Write the deck index (slide titles only).
+2. Build the cover.
+3. Build the remaining slides in small batches.
+4. Put speaker `notes` on every slide.
 
 ## Spec syntax
 
@@ -132,8 +130,8 @@ Set these on the deck. Slide fields override the deck for that slide. Sizes are 
 | `theme` | Starting palette: `professional`, `business`, `midnight`, `forest`, `blush`, `sage`, `sand`, `charcoal`, or `plain` |
 | `palette` | `["cover", "secondary", "eyebrow"]` — replaces the theme colors |
 | `colors` | One role: `accent`, `gold`, `eyebrow`, `cover`, `header` |
-| `fonts` | `{"font": "Calibri"}` — one face for the whole deck |
-| `sizes` | `{"title": 36, "heading": 28, "subtitle": 16, "body": 16, "kpi": 26, "table": 15}` |
+| `fonts` | `{"title": "Georgia", "body": "Calibri"}`. `font` sets both faces |
+| `sizes` | `{"title": 48, "heading": 36, "subtitle": 22, "body": 16, "kpi": 36, "table": 16}` — nothing under 12 |
 | `brand`, `report`, `footer` | Running text, from the request |
 
 Slide content:
@@ -150,8 +148,8 @@ See `references/design.md`.
 
 ## Procedure
 
-1. **Create** — JSON with `theme` plus slides (`layout`, `title`, `bullets`,
-   `tables`, `charts`, `images`, `shapes`, `notes`). Prefer the design bar above.
+1. **Create** — decide palette, fonts, and the outline first, then JSON
+   (`layout`, `title`, `bullets`, `cards`, `kpis`, `tables`, `charts`, `notes`).
 2. **Read** — `--outline` for structure; `--images DIR` to dump pictures.
 3. **Edit** — combine flags in one `pptx_edit.py` pass; use `--output` to keep
    the original. Chart `"ops"` round-trip via full `replace_data`.
